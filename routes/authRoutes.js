@@ -2,28 +2,41 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-require('dotenv').config();
+const dotenv = require('dotenv');
+const cookieParser = require('cookie-parser');
 
+dotenv.config();
 const router = express.Router();
+router.use(cookieParser());  // Enable cookie handling
 
 // User Registration
 router.post('/signup', async (req, res) => {
     const { fullName, mobileNumber, password, userType } = req.body;
 
     try {
+        // Check if the user already exists
         let userExists = await User.findOne({ mobileNumber });
         if (userExists) {
-            return res.status(400).json({ message: 'User already exists' });
+            return res.status(400).json({ message: 'User already exists with this mobile number.' });
         }
 
+        // Check password length
+        if (password.length < 6) {
+            return res.status(400).json({ message: 'Password must be at least 6 characters.' });
+        }
+
+        // Hash the password
         const hashedPassword = await bcrypt.hash(password, 10);
+        
+        // Create new user
         const user = new User({ fullName, mobileNumber, password: hashedPassword, userType });
 
+        // Save the user in the database
         await user.save();
-
-        res.status(201).json({ message: 'User registered successfully' });
+        res.status(201).json({ message: 'User registered successfully.' });
     } catch (error) {
-        res.status(500).json({ message: 'Server error', error });
+        console.error(error);
+        res.status(500).json({ message: 'Something went wrong. Please try again later.' });
     }
 });
 
@@ -32,22 +45,35 @@ router.post('/signin', async (req, res) => {
     const { mobileNumber, password } = req.body;
 
     try {
+        // Find the user by mobile number
         const user = await User.findOne({ mobileNumber });
         if (!user) {
             return res.status(400).json({ message: 'Invalid Credentials' });
         }
 
+        // Check if the password matches
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.status(400).json({ message: 'Invalid Credentials' });
         }
 
+        // Generate JWT token
         const token = jwt.sign({ id: user._id, userType: user.userType }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-        res.status(200).json({ token, userType: user.userType });
+        // Store JWT in an HTTP-only cookie
+        res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'Strict' });
+
+        res.status(200).json({ message: 'Login successful', userType: user.userType });
     } catch (error) {
-        res.status(500).json({ message: 'Server error', error });
+        console.error(error);
+        res.status(500).json({ message: 'Something went wrong. Please try again later.' });
     }
+});
+
+// User Logout
+router.post('/logout', (req, res) => {
+    res.clearCookie('token'); // Clear the JWT cookie
+    res.status(200).json({ message: 'Logged out successfully' });
 });
 
 module.exports = router;
