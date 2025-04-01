@@ -7,7 +7,8 @@ const cookieParser = require('cookie-parser');
 
 dotenv.config();
 const router = express.Router();
-router.use(cookieParser());  // Enable cookie handling
+router.use(cookieParser()); 
+
 
 // User Registration
 router.post('/signup', async (req, res) => {
@@ -40,33 +41,37 @@ router.post('/signup', async (req, res) => {
     }
 });
 
+
+
 // User Login
 router.post('/signin', async (req, res) => {
     const { mobileNumber, password } = req.body;
 
     try {
-        // Find the user by mobile number
         const user = await User.findOne({ mobileNumber });
         if (!user) {
             return res.status(400).json({ message: 'Invalid Credentials' });
         }
 
-        // Check if the password matches
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.status(400).json({ message: 'Invalid Credentials' });
         }
 
-        // Generate JWT token
-        const token = jwt.sign({ id: user._id, userType: user.userType }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign(
+            { id: user._id, userType: user.userType }, 
+            process.env.JWT_SECRET, 
+            { expiresIn: '24h' }
+        );
 
-        // Store JWT in an HTTP-only cookie
-        res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'Strict' });
-
-        res.status(200).json({ message: 'Login successful', userType: user.userType });
+        res.status(200).json({ 
+            message: 'Login successful', 
+            token, 
+            userType: user.userType 
+        });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: 'Something went wrong. Please try again later.' });
+        res.status(500).json({ message: 'Server Error' });
     }
 });
 
