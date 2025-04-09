@@ -15,13 +15,26 @@ router.post("/submit", async (req, res) => {
 });
 
 // Fetch Submitted Data
-router.get("/fetch", async (req, res) => {
+// Fetch data by user ID
+router.get("/fetch/:id", async (req, res) => {
   try {
-    const data = await FormData.find();
+    const userId = req.params.id;
+
+    if (!userId) {
+      return res.status(400).json({ error: "User ID is required" });
+    }
+
+    const data = await FormData.find({ memberId: userId });
+
+    if (!data || data.length === 0) {
+      return res.status(404).json({ error: "No data found for this user" });
+    }
+
     res.status(200).json(data);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch data" });
   }
 });
+
 
 module.exports = router;
