@@ -75,6 +75,7 @@ router.post('/signin', async (req, res) => {
     }
 });
 
+
 // User Logout
 router.post('/logout', (req, res) => {
     res.clearCookie('token');

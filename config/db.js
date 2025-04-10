@@ -1,5 +1,3 @@
-// To connect backend with MongoDB Database
-
 const mongoose = require('mongoose');
 require('dotenv').config();
 

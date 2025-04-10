@@ -4,7 +4,7 @@ require('dotenv').config();
 const connectDB = require('./config/db');
 const app = express();
 const formRoutes = require("./routes/cultivationRoutes");
-
+const cropRoutes = require("./routes/cropRoutes");  
 
 // Connect to MongoDB
 connectDB();
@@ -17,6 +17,7 @@ app.use(express.json());
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use("/api", formRoutes);
+app.use("/api", cropRoutes);
 
 // Server
 const PORT = process.env.PORT || 5000;
