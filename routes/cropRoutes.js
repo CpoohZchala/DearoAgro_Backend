@@ -39,8 +39,8 @@ router.get("/cropfetch/:id", async (req, res) => {
 // Update 
 router.put("/cropupdate", async (req, res) => {
   try {
-    const { id, ...updateData } = req.body;
-    const updatedData = await CropData.findByIdAndUpdate(id, updateData, { new: true });
+    const { _id, ...updateData } = req.body;
+    const updatedData = await CropData.findByIdAndUpdate(_id, updateData, { new: true });
     
     if (!updatedData) {
       return res.status(404).json({ error: "Data not found" });

@@ -5,6 +5,8 @@ const connectDB = require('./config/db');
 const app = express();
 const formRoutes = require("./routes/cultivationRoutes");
 const cropRoutes = require("./routes/cropRoutes");  
+const expenseRoutes = require("./routes/expenseRoute");  
+
 
 // Connect to MongoDB
 connectDB();
@@ -18,6 +20,7 @@ app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use("/api", formRoutes);
 app.use("/api", cropRoutes);
+app.use("/api", expenseRoutes);
 
 // Server
 const PORT = process.env.PORT || 5000;

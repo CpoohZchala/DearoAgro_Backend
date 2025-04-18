@@ -1,12 +1,12 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
-const cropSchema = new mongoose.Schema({
-  memberId: { type: String, required: true },
-  addDate: { type: String, required: true },
-  description: { type: String, required: true },
- 
+const expenseSchema = new mongoose.Schema({
+  memberId: {type: String,required: true},
+  addDate: {type: String,required: true},
+  description: {type: String,required: true},
+  expense: {type: Number,required: true}, 
 });
 
-const CropData = mongoose.model("CropData", cropSchema);
+const ExpenseData = mongoose.model("ExpenseData", expenseSchema);
 
-module.exports = CropData;
+module.exports = ExpenseData;
