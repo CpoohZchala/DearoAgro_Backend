@@ -6,6 +6,7 @@ const app = express();
 const formRoutes = require("./routes/cultivationRoutes");
 const cropRoutes = require("./routes/cropRoutes");  
 const expenseRoutes = require("./routes/expenseRoute");  
+const generalRoutes = require("./routes/generalRoutes");  
 
 
 // Connect to MongoDB
@@ -21,6 +22,7 @@ app.use('/api/users', require('./routes/userRoutes'));
 app.use("/api", formRoutes);
 app.use("/api", cropRoutes);
 app.use("/api", expenseRoutes);
+app.use("/api", generalRoutes);
 
 // Server
 const PORT = process.env.PORT || 5000;
