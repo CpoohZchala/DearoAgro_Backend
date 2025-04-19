@@ -1,14 +1,14 @@
 const express = require("express");
-const FormData = require("../models/Cultivational");
+const CropData = require("../models/CropUpdate");
 
 const router = express.Router();
 
 
 // Submit Form Data
-router.post("/submit", async (req, res) => {
+router.post("/cropsubmit", async (req, res) => {
   try {
-    const formData = new FormData(req.body);
-    await formData.save();
+    const cropData = new CropData(req.body);
+    await cropData.save();
     res.status(201).json({ message: "Data submitted successfully!" });
   } catch (error) {
     res.status(500).json({ error: "Failed to submit data" });
@@ -16,7 +16,7 @@ router.post("/submit", async (req, res) => {
 });
 
 // Fetch data by user ID
-router.get("/fetch/:id", async (req, res) => {
+router.get("/cropfetch/:id", async (req, res) => {
   try {
     const userId = req.params.id;
 
@@ -24,7 +24,7 @@ router.get("/fetch/:id", async (req, res) => {
       return res.status(400).json({ error: "User ID is required" });
     }
 
-    const data = await FormData.find({ memberId: userId });
+    const data = await CropData.find({ memberId: userId });
 
     if (!data || data.length === 0) {
       return res.status(404).json({ error: "No data found for this user" });
@@ -37,10 +37,10 @@ router.get("/fetch/:id", async (req, res) => {
 });
 
 // Update 
-router.put("/update", async (req, res) => {
+router.put("/cropupdate", async (req, res) => {
   try {
-    const { id, ...updateData } = req.body;
-    const updatedData = await FormData.findByIdAndUpdate(id, updateData, { new: true });
+    const { _id, ...updateData } = req.body;
+    const updatedData = await CropData.findByIdAndUpdate(_id, updateData, { new: true });
     
     if (!updatedData) {
       return res.status(404).json({ error: "Data not found" });
@@ -56,9 +56,9 @@ router.put("/update", async (req, res) => {
 });
 
 // Delete 
-router.delete("/delete/:id", async (req, res) => {
+router.delete("/cropdelete/:id", async (req, res) => {
   try {
-    const result = await FormData.findByIdAndDelete(req.params.id);
+    const result = await CropData.findByIdAndDelete(req.params.id);
     
     if (!result) {
       return res.status(404).json({ error: "Data not found" });
