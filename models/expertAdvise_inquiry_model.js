@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-const general_InquirySchema = new Schema(
+const expert_InquirySchema = new Schema(
   {
     title: {type: String,required: true,},
     description: {type: String,required: true,},
@@ -11,9 +11,9 @@ const general_InquirySchema = new Schema(
   { timestamps: true }
 );
 
-const General_Inquiry = mongoose.model(
-  "General_Inquiry",
-  general_InquirySchema
+const Expert_Inquiry = mongoose.model(
+  "Expert_Inquiry",
+  expert_InquirySchema
 );
 
-module.exports = General_Inquiry;
+module.exports = Expert_Inquiry;
