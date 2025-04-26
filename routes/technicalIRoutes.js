@@ -50,11 +50,7 @@ router.post("/tinquiry", (req, res) => {
       const documentPath = req.files['documentPath'] ? 
         '/uploads_technical/' + req.files['documentPath'][0].filename : null;
 
-      console.log('Creating inquiry with:', {
-        title, description, date, imagePath, documentPath
-      });
-
-      const newInquiry = new General_Inquiry({
+      const newInquiry = new Technical_Inquiry({
         title,
         description,
         date,
@@ -74,11 +70,10 @@ router.post("/tinquiry", (req, res) => {
   });
 });
 
-
 // Get all inquiries
 router.get("/tinquiries", async (req, res) => {
   try {
-    const inquiries = await General_Inquiry.find();
+    const inquiries = await Technical_Inquiry.find();
     res.status(200).json(inquiries);
   } catch (err) {
     console.error(err);
@@ -89,7 +84,7 @@ router.get("/tinquiries", async (req, res) => {
 // Get a single inquiry by ID
 router.get("/tinquiry/:id", async (req, res) => {
   try {
-    const inquiry = await General_Inquiry.findById(req.params.id);
+    const inquiry = await Technical_Inquiry.findById(req.params.id);
     if (!inquiry) {
       return res.status(404).json({ message: "Inquiry not found" });
     }
@@ -104,7 +99,7 @@ router.get("/tinquiry/:id", async (req, res) => {
 router.put("/tinquiry/:id", async (req, res) => {
   try {
     const { title, description, date, imagePath, documentPath } = req.body;
-    const updatedInquiry = await General_Inquiry.findByIdAndUpdate(
+    const updatedInquiry = await Technical_Inquiry.findByIdAndUpdate(
       req.params.id,
       { title, description, date, imagePath, documentPath },
       { new: true }
@@ -124,7 +119,7 @@ router.put("/tinquiry/:id", async (req, res) => {
 // Delete an inquiry by ID
 router.delete("/tinquiry/:id", async (req, res) => {
   try {
-    const deletedInquiry = await General_Inquiry.findByIdAndDelete(req.params.id);
+    const deletedInquiry = await Technical_Inquiry.findByIdAndDelete(req.params.id);
     if (!deletedInquiry) {
       return res.status(404).json({ message: "Inquiry not found" });
     }
