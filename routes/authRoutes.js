@@ -2,6 +2,9 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const SuperAdmin = require('../models/SuperAdmin'); // Import the SuperAdmin model
+const Farmer = require('../models/Farmer'); // Import the Farmer model
+const MarketingOfficer = require('../models/MarketingOfficer'); // Import the MarketingOfficer model
 const dotenv = require('dotenv');
 const cookieParser = require('cookie-parser');
 
@@ -15,6 +18,60 @@ router.post('/signup', async (req, res) => {
     const { fullName, mobileNumber, password, userType } = req.body;
 
     try {
+        if (userType === 'Marketing Officer') {
+            // Check if the Marketing Officer already exists
+            let marketingOfficerExists = await MarketingOfficer.findOne({ mobileNumber });
+            if (marketingOfficerExists) {
+                return res.status(400).json({ message: 'Marketing Officer already exists with this mobile number.' });
+            }
+
+            // Hash the password
+            const hashedPassword = await bcrypt.hash(password, 10);
+
+            // Create new Marketing Officer
+            const marketingOfficer = new MarketingOfficer({ fullName, mobileNumber, password: hashedPassword });
+
+            // Save the Marketing Officer in the database
+            await marketingOfficer.save();
+            return res.status(201).json({ message: 'Marketing Officer registered successfully.' });
+        }
+
+        if (userType === 'Farmer') {
+            // Check if the Farmer already exists
+            let farmerExists = await Farmer.findOne({ mobileNumber });
+            if (farmerExists) {
+                return res.status(400).json({ message: 'Farmer already exists with this mobile number.' });
+            }
+
+            // Hash the password
+            const hashedPassword = await bcrypt.hash(password, 10);
+
+            // Create new Farmer
+            const farmer = new Farmer({ fullName, mobileNumber, password: hashedPassword });
+
+            // Save the Farmer in the database
+            await farmer.save();
+            return res.status(201).json({ message: 'Farmer registered successfully.' });
+        }
+
+        if (userType === 'Super Admin') {
+            // Check if the Super Admin already exists
+            let superAdminExists = await SuperAdmin.findOne({ mobileNumber });
+            if (superAdminExists) {
+                return res.status(400).json({ message: 'Super Admin already exists with this mobile number.' });
+            }
+
+            // Hash the password
+            const hashedPassword = await bcrypt.hash(password, 10);
+
+            // Create new Super Admin
+            const superAdmin = new SuperAdmin({ fullName, mobileNumber, password: hashedPassword });
+
+            // Save the Super Admin in the database
+            await superAdmin.save();
+            return res.status(201).json({ message: 'Super Admin registered successfully.' });
+        }
+
         // Check if the user already exists
         let userExists = await User.findOne({ mobileNumber });
         if (userExists) {
@@ -48,15 +105,102 @@ router.post('/signup', async (req, res) => {
 // User Login
 router.post('/signin', async (req, res) => {
     const { mobileNumber, password } = req.body;
+    console.log('Sign-in request received:', { mobileNumber, userType: req.body.userType }); // Debugging log
 
     try {
+        if (!req.body.userType) {
+            return res.status(400).json({ message: 'User type is required for sign-in.' });
+        }
+
+        if (req.body.userType === 'Super Admin') {
+            const superAdmin = await SuperAdmin.findOne({ mobileNumber });
+
+            if (!superAdmin) {
+                return res.status(400).json({ message: 'Invalid Credentials' });
+            }
+
+            const isMatch = await bcrypt.compare(password, superAdmin.password);
+            console.log('Password comparison result for Super Admin:', isMatch); // Debugging log
+            if (!isMatch) {
+                return res.status(400).json({ message: 'Invalid Credentials' });
+            }
+
+            const token = jwt.sign(
+                { id: superAdmin._id, userType: 'Super Admin' },
+                process.env.JWT_SECRET,
+                { expiresIn: '24h' }
+            );
+
+            return res.status(200).json({
+                message: 'Login successful',
+                token,
+                userType: 'Super Admin',
+                userId: superAdmin._id
+            });
+        }
+
+        if (req.body.userType === 'Farmer') {
+            const farmer = await Farmer.findOne({ mobileNumber });
+            console.log('Farmer fetched from DB:', farmer); // Debugging log
+            if (!farmer) {
+                return res.status(400).json({ message: 'Invalid Credentials' });
+            }
+
+            const isMatch = await bcrypt.compare(password, farmer.password);
+            console.log('Password comparison result for Farmer:', isMatch); // Debugging log
+            if (!isMatch) {
+                return res.status(400).json({ message: 'Invalid Credentials' });
+            }
+
+            const token = jwt.sign(
+                { id: farmer._id, userType: 'Farmer' },
+                process.env.JWT_SECRET,
+                { expiresIn: '24h' }
+            );
+
+            return res.status(200).json({
+                message: 'Login successful',
+                token,
+                userType: 'Farmer',
+                userId: farmer._id
+            });
+        }
+
+        if (req.body.userType === 'Marketing Officer') {
+            const marketingOfficer = await MarketingOfficer.findOne({ mobileNumber });
+            console.log('Marketing Officer fetched from DB:', marketingOfficer); // Debugging log
+            if (!marketingOfficer) {
+                return res.status(400).json({ message: 'Invalid Credentials' });
+            }
+
+            const isMatch = await bcrypt.compare(password, marketingOfficer.password);
+            console.log('Password comparison result for Marketing Officer:', isMatch); // Debugging log
+            if (!isMatch) {
+                return res.status(400).json({ message: 'Invalid Credentials' });
+            }
+
+            const token = jwt.sign(
+                { id: marketingOfficer._id, userType: 'Marketing Officer' },
+                process.env.JWT_SECRET,
+                { expiresIn: '24h' }
+            );
+
+            return res.status(200).json({
+                message: 'Login successful',
+                token,
+                userType: 'Marketing Officer',
+                userId: marketingOfficer._id
+            });
+        }
+
         const user = await User.findOne({ mobileNumber });
+        console.log('User fetched from DB:', user); // Debugging log
         if (!user) {
             return res.status(400).json({ message: 'Invalid Credentials' });
         }
-        console.log('User found:', user); // Debugging log
+
         const isMatch = await bcrypt.compare(password, user.password);
-        console.log('Password comparison result:', isMatch); // Debugging log
+        console.log('Password comparison result for User:', isMatch); // Debugging log
         if (!isMatch) {
             return res.status(400).json({ message: 'Invalid Credentials' });
         }
