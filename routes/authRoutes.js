@@ -27,7 +27,9 @@ router.post('/signup', async (req, res) => {
         }
 
         // Hash the password
+        console.log('Password before hashing:', password); // Debugging log
         const hashedPassword = await bcrypt.hash(password, 10);
+        console.log('Hashed password:', hashedPassword); // Debugging log
         
         // Create new user
         const user = new User({ fullName, mobileNumber, password: hashedPassword, userType });
@@ -52,8 +54,9 @@ router.post('/signin', async (req, res) => {
         if (!user) {
             return res.status(400).json({ message: 'Invalid Credentials' });
         }
-
+        console.log('User found:', user); // Debugging log
         const isMatch = await bcrypt.compare(password, user.password);
+        console.log('Password comparison result:', isMatch); // Debugging log
         if (!isMatch) {
             return res.status(400).json({ message: 'Invalid Credentials' });
         }
@@ -67,7 +70,8 @@ router.post('/signin', async (req, res) => {
         res.status(200).json({ 
             message: 'Login successful', 
             token, 
-            userType: user.userType 
+            userType: user.userType, 
+            userId: user._id 
         });
     } catch (error) {
         console.error(error);
