@@ -28,19 +28,35 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-//Create a new farmer
+// Check for duplicate mobileNumber before creating a new farmer
 router.post('/', async (req, res) => {
-    try {
-      const { fullName, mobileNumber, password } = req.body;
-      const newFarmer = new Farmer({ fullName, mobileNumber, password });
-      const savedFarmer = await newFarmer.save(); 
-      console.log('Saved Farmer:', savedFarmer);
-      res.status(201).json(savedFarmer);
-    } catch (error) {
-      console.error('Error creating farmer:', error);
-      res.status(500).json({ message: 'Failed to create farmer', error: error.message });
+  try {
+    const { fullName, mobileNumber, password } = req.body;
+
+    // Check if mobileNumber already exists
+    const existingFarmer = await Farmer.findOne({ mobileNumber });
+    if (existingFarmer) {
+      return res.status(400).json({ message: 'Mobile number already exists' });
     }
-  });
+
+    const newFarmer = new Farmer({ fullName, mobileNumber, password });
+    const savedFarmer = await newFarmer.save();
+    console.log('Saved Farmer:', savedFarmer);
+    res.status(201).json(savedFarmer);
+  } catch (error) {
+    console.error('Error creating farmer:', error);
+
+    // Handle duplicate key error
+    if (error.code === 11000) {
+      return res.status(400).json({
+        message: 'Duplicate key error: Mobile number already exists',
+        keyValue: error.keyValue,
+      });
+    }
+
+    res.status(500).json({ message: 'Failed to create farmer', error: error.message });
+  }
+});
   
 
 // Update a farmer by ID
@@ -78,16 +94,24 @@ router.put('/:id', async (req, res) => {
 
 // Delete a farmer by ID
 router.delete('/:id', async (req, res) => {
+  const { id } = req.params;
+
+  // Check if ID is provided
+  if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: 'Invalid or missing farmer ID' });
+  }
+
   try {
-    const deletedFarmer = await Farmer.findByIdAndDelete(req.params.id);
+    const deletedFarmer = await Farmer.findByIdAndDelete(id);
     if (!deletedFarmer) {
       return res.status(404).json({ message: 'Farmer not found' });
     }
     res.json({ message: 'Farmer deleted successfully' });
   } catch (error) {
     console.error('Error deleting farmer:', error);
-    res.status(500).json({ message: 'Failed to delete farmer', error: error.message });
+    res.status(500).json({ message: 'Failed to delete farmer' });
   }
 });
+
 
 module.exports = router;

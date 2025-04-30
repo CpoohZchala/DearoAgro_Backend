@@ -11,6 +11,8 @@ const financialIRoutes = require("./routes/generalRoutes");
 const technicalIRoutes = require("./routes/technicalIRoutes");
 const farmerRoutes = require('./routes/farmerRoutes'); 
 const superAdminRoutes = require('./routes/superAdminRoutes');
+const groupRoutes = require('./routes/groupRoutes'); 
+
 
 
 // Connect to MongoDB
@@ -31,6 +33,8 @@ app.use("/api", financialIRoutes);
 app.use("/api", technicalIRoutes);
 app.use('/api/farmers', farmerRoutes);
 app.use('/superAdminRoutes', superAdminRoutes);
+app.use('/api/groups', groupRoutes);
+
 
 
 
