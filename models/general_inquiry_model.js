@@ -3,26 +3,12 @@ const Schema = mongoose.Schema;
 
 const general_InquirySchema = new Schema(
   {
-    title: {
-      type: String,
-      required: true,
-    },
-    description: {
-      type: String,
-      required: true,
-    },
-    date: {
-      type: Date,
-      required: true,
-    },
-    imagePath: {
-      type: String,
-      required: false,
-    },
-    documentPath: {
-      type: String,
-      required: false,
-    },
+    title: { type: String, required: true },
+    description: { type: String, required: true },
+    date: { type: Date, required: true },
+    imagePath: { type: String },
+    documentPath: { type: String },
+    status: { type: String, default: "pending" }
   },
   { timestamps: true }
 );

@@ -1,12 +1,12 @@
 const express = require("express");
 const router = express.Router();
-const General_Inquiry = require("../models/general_inquiry_model");
-const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
+const Financial_Inquiry = require("../models/financial_inquiry_model");
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 
 // Ensure uploads directory exists
-const uploadDir = "uploads";
+const uploadDir = 'uploads_financial';
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -17,66 +17,68 @@ const storage = multer.diskStorage({
     cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     cb(null, uniqueSuffix + path.extname(file.originalname));
-  },
+  }
 });
 
-const upload = multer({
+const upload = multer({ 
   storage: storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
 }).fields([
-  { name: "imagePath", maxCount: 1 },
-  { name: "documentPath", maxCount: 1 },
+  { name: 'imagePath', maxCount: 1 },
+  { name: 'documentPath', maxCount: 1 }
 ]);
 
 // Create a new inquiry with file uploads
-router.post("/inquiry", (req, res) => {
+router.post("/finquiry", (req, res) => {
   upload(req, res, async (err) => {
     if (err) {
-      console.error("Upload error:", err);
-      return res.status(500).json({
+      console.error('Upload error:', err);
+      return res.status(500).json({ 
         message: "File upload failed",
-        error: err.message,
+        error: err.message 
       });
     }
 
     try {
       const { title, description, date } = req.body;
-
+      
       // Get file paths if files were uploaded
-      const imagePath = req.files["imagePath"]
-        ? path.join("uploads", req.files["imagePath"][0].filename)
-        : null;
-      const documentPath = req.files["documentPath"]
-        ? path.join("uploads", req.files["documentPath"][0].filename)
-        : null;
+      const imagePath = req.files['imagePath'] ? 
+        '/uploads_financial/' + req.files['imagePath'][0].filename : null;
+      const documentPath = req.files['documentPath'] ? 
+        '/uploads_financial/' + req.files['documentPath'][0].filename : null;
 
-      const newInquiry = new General_Inquiry({
+      console.log('Creating inquiry with:', {
+        title, description, date, imagePath, documentPath
+      });
+
+      const newInquiry = new Financial_Inquiry ({
         title,
         description,
-        date: new Date(date),
+        date,
         imagePath,
         documentPath,
-        status: "pending",
       });
 
       const savedInquiry = await newInquiry.save();
       res.status(201).json(savedInquiry);
     } catch (err) {
-      console.error("Database error:", err);
-      res.status(500).json({
+      console.error('Database error:', err);
+      res.status(500).json({ 
         message: "Error creating inquiry",
-        error: err.message,
+        error: err.message 
       });
     }
   });
 });
 
+
 // Get all inquiries
-router.get("/inquiries", async (req, res) => {
+router.get("/finquiries", async (req, res) => {
   try {
-    const inquiries = await General_Inquiry.find();
+    const inquiries = await Financial_Inquiry .find();
     res.status(200).json(inquiries);
   } catch (err) {
     console.error(err);
@@ -85,9 +87,9 @@ router.get("/inquiries", async (req, res) => {
 });
 
 // Get a single inquiry by ID
-router.get("/inquiry/:id", async (req, res) => {
+router.get("/finquiry/:id", async (req, res) => {
   try {
-    const inquiry = await General_Inquiry.findById(req.params.id);
+    const inquiry = await Financial_Inquiry .findById(req.params.id);
     if (!inquiry) {
       return res.status(404).json({ message: "Inquiry not found" });
     }
@@ -99,10 +101,10 @@ router.get("/inquiry/:id", async (req, res) => {
 });
 
 // Update an inquiry by ID
-router.put("/inquiry/:id", async (req, res) => {
+router.put("/finquiry/:id", async (req, res) => {
   try {
     const { title, description, date, imagePath, documentPath } = req.body;
-    const updatedInquiry = await General_Inquiry.findByIdAndUpdate(
+    const updatedInquiry = await Financial_Inquiry .findByIdAndUpdate(
       req.params.id,
       { title, description, date, imagePath, documentPath },
       { new: true }
@@ -120,11 +122,9 @@ router.put("/inquiry/:id", async (req, res) => {
 });
 
 // Delete an inquiry by ID
-router.delete("/inquiry/:id", async (req, res) => {
+router.delete("/finquiry/:id", async (req, res) => {
   try {
-    const deletedInquiry = await General_Inquiry.findByIdAndDelete(
-      req.params.id
-    );
+    const deletedInquiry = await Financial_Inquiry .findByIdAndDelete(req.params.id);
     if (!deletedInquiry) {
       return res.status(404).json({ message: "Inquiry not found" });
     }

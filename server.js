@@ -7,6 +7,12 @@ const formRoutes = require("./routes/cultivationRoutes");
 const cropRoutes = require("./routes/cropRoutes");  
 const expenseRoutes = require("./routes/expenseRoute");  
 const generalRoutes = require("./routes/generalRoutes");  
+const financialIRoutes = require("./routes/generalRoutes");  
+const technicalIRoutes = require("./routes/technicalIRoutes");
+const farmerRoutes = require('./routes/farmerRoutes'); 
+const superAdminRoutes = require('./routes/superAdminRoutes');
+const groupRoutes = require('./routes/groupRoutes'); 
+
 
 
 // Connect to MongoDB
@@ -23,6 +29,14 @@ app.use("/api", formRoutes);
 app.use("/api", cropRoutes);
 app.use("/api", expenseRoutes);
 app.use("/api", generalRoutes);
+app.use("/api", financialIRoutes);
+app.use("/api", technicalIRoutes);
+app.use('/api/farmers', farmerRoutes);
+app.use('/superAdminRoutes', superAdminRoutes);
+app.use('/api/groups', groupRoutes);
+
+
+
 
 // Server
 const PORT = process.env.PORT || 5000;
