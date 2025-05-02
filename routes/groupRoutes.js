@@ -160,4 +160,33 @@ router.delete('/:groupId', async (req, res) => {
   }
 });
 
+// Remove a farmer from a group
+router.delete('/:groupId/remove-farmer/:farmerId', async (req, res) => {
+  try {
+    const { groupId, farmerId } = req.params;
+
+    // Validate groupId and farmerId format
+    if (!mongoose.Types.ObjectId.isValid(groupId)) {
+      return res.status(400).json({ message: 'Invalid groupId format' });
+    }
+    if (!mongoose.Types.ObjectId.isValid(farmerId)) {
+      return res.status(400).json({ message: 'Invalid or missing farmer ID' });
+    }
+
+    const group = await Group.findById(groupId);
+    if (!group) {
+      return res.status(404).json({ message: 'Group not found' });
+    }
+
+    // Remove the farmerId from the farmers array
+    group.farmers = group.farmers.filter((id) => id.toString() !== farmerId);
+    await group.save();
+
+    res.json({ message: 'Farmer removed from group successfully', group });
+  } catch (error) {
+    console.error('Error removing farmer from group:', error.message);
+    res.status(500).json({ message: 'Failed to remove farmer from group', error: error.message });
+  }
+});
+
 module.exports = router;
