@@ -53,6 +53,33 @@ router.get('/:groupId', async (req, res) => {
   }
 });
 
+
+// Fetch farmers assigned to a specific group
+router.get('/:groupId/members', async (req, res) => {
+  try {
+    const { groupId } = req.params;
+
+    // Validate groupId format
+    if (!mongoose.Types.ObjectId.isValid(groupId)) {
+      return res.status(400).json({ message: 'Invalid groupId format' });
+    }
+
+    const group = await Group.findById(groupId).populate({
+      path: 'farmers',
+      select: 'fullName mobileNumber'
+    });
+
+    if (!group) {
+      return res.status(404).json({ message: 'Group not found' });
+    }
+
+    res.json(group.farmers || []); 
+  } catch (error) {
+    console.error('Error fetching group members:', error.message);
+    res.status(500).json({ message: 'Failed to fetch group members', error: error.message });
+  }
+});
+
 // Assign a farmer to a group
 router.post('/:groupId/assign-farmer', async (req, res) => {
   try {
