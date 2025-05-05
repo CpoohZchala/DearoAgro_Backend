@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const Group = require('../models/Group');
-const mongoose = require('mongoose'); // Import mongoose for ObjectId validation
+const mongoose = require('mongoose');
+const Farmer = require('../models/Farmer');
 
 // Create a new group
 router.post('/', async (req, res) => {
@@ -101,8 +102,26 @@ router.post('/:groupId/assign-farmer', async (req, res) => {
       return res.status(404).json({ message: 'Group not found' });
     }
 
+    const farmer = await Farmer.findById(farmerId);
+    if (!farmer) {
+      return res.status(404).json({ message: 'Farmer not found' });
+    }
+
+    // Fetch the group's name
+    const groupName = group.name;
+
+    // Assign the farmer to the group
     group.farmers.push(farmerId);
     await group.save();
+
+    console.log('Updated Group:', group); // Log the updated group object to debug saving issues
+
+    // Explicitly set and save the groupId and groupName fields in the Farmer model
+    farmer.groupId = groupId;
+    farmer.groupName = groupName;
+    await farmer.save();
+
+    console.log('Updated Farmer:', farmer); // Log the updated farmer object to debug saving issues
 
     res.json({ message: 'Farmer assigned to group successfully', group });
   } catch (error) {
@@ -166,7 +185,7 @@ router.delete('/:groupId/remove-farmer/:farmerId', async (req, res) => {
     const { groupId, farmerId } = req.params;
 
     // Validate groupId and farmerId format
-    if (!mongoose.Types.ObjectId.isValid(groupId)) {
+    if (!mongoose.Types.ObjectId.isValid(groupId)) {            
       return res.status(400).json({ message: 'Invalid groupId format' });
     }
     if (!mongoose.Types.ObjectId.isValid(farmerId)) {
@@ -178,9 +197,18 @@ router.delete('/:groupId/remove-farmer/:farmerId', async (req, res) => {
       return res.status(404).json({ message: 'Group not found' });
     }
 
+    const farmer = await Farmer.findById(farmerId);
+    if (!farmer) {
+      return res.status(404).json({ message: 'Farmer not found' });
+    }
+
     // Remove the farmerId from the farmers array
     group.farmers = group.farmers.filter((id) => id.toString() !== farmerId);
     await group.save();
+
+    // Clear the farmer's group field
+    farmer.group = null;
+    await farmer.save();
 
     res.json({ message: 'Farmer removed from group successfully', group });
   } catch (error) {
