@@ -36,6 +36,24 @@ router.get("/cropfetch/:id", async (req, res) => {
   }
 });
 
+
+// Get crops by farmer name
+router.get("/byname/:name", async (req, res) => {
+  try {
+    const name = req.params.name;
+    const data = await CropData.find({ farmerName: { $regex: new RegExp(name, 'i') } });
+    
+    if (!data.length) {
+      return res.status(404).json({ error: "No crops found for this name" });
+    }
+
+    res.status(200).json(data);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch data" });
+  }
+});
+
+
 // Update 
 router.put("/cropupdate", async (req, res) => {
   try {
