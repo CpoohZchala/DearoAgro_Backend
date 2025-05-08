@@ -30,7 +30,6 @@ const upload = multer({
   { name: "documentPath", maxCount: 1 },
 ]);
 
-// Create a new inquiry with file uploads
 router.post("/inquiry", (req, res) => {
   upload(req, res, async (err) => {
     if (err) {
@@ -42,7 +41,7 @@ router.post("/inquiry", (req, res) => {
     }
 
     try {
-      const { title, description, date } = req.body;
+      const { title, description, date, userId } = req.body; // Include userId in the request body
 
       // Get file paths if files were uploaded
       const imagePath = req.files["imagePath"]
@@ -59,6 +58,7 @@ router.post("/inquiry", (req, res) => {
         imagePath,
         documentPath,
         status: "pending",
+        userId,
       });
 
       const savedInquiry = await newInquiry.save();
@@ -132,6 +132,28 @@ router.delete("/inquiry/:id", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Error deleting inquiry" });
+  }
+});
+
+// Get inquiries by user ID
+router.get("/inquiries/user/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Validate userId format
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: "Invalid userId format" });
+    }
+
+    const inquiries = await General_Inquiry.find({ userId });
+    if (!inquiries || inquiries.length === 0) {
+      return res.status(404).json({ message: "No inquiries found for this user" });
+    }
+
+    res.status(200).json(inquiries);
+  } catch (err) {
+    console.error("Error fetching inquiries by user ID:", err);
+    res.status(500).json({ message: "Error fetching inquiries", error: err.message });
   }
 });
 
