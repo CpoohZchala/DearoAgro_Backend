@@ -71,18 +71,7 @@ router.delete("/delete/:id", async (req, res) => {
 });
 
 
-router.get('/api/cultivation/fetch/:farmerId', async (req, res) => {
-  const farmerId = req.params.farmerId;
-  try {
-    const crops = await CropData.find({ memberId: farmerId });
-    if (!crops.length) {
-      return res.status(404).json({ error: 'No crops found for this farmer' });
-    }
-    res.status(200).json(crops);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch crop details' });
-  }
-});
+
 
 
 module.exports = router;
