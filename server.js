@@ -34,6 +34,8 @@ app.use('/superAdminRoutes', superAdminRoutes);
 app.use('/api/groups', groupRoutes);
 
 
+app.use('/uploads', express.static('uploads')); 
+
 
 
 // Server

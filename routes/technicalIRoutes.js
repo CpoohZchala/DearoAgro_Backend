@@ -14,10 +14,12 @@ if (!fs.existsSync(uploadDir)) {
 // Configure multer storage
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
+    console.log('Saving file to:', uploadDir); // Debug log
     cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    console.log('Generated filename:', uniqueSuffix + path.extname(file.originalname)); // Debug log
     cb(null, uniqueSuffix + path.extname(file.originalname));
   }
 });
