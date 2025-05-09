@@ -46,9 +46,9 @@ router.post("/tinquiry", (req, res) => {
       
       // Get file paths if files were uploaded
       const imagePath = req.files['imagePath'] ? 
-        '/uploads_technical/' + req.files['imagePath'][0].filename : null;
+        '/uploads/' + req.files['imagePath'][0].filename : null;
       const documentPath = req.files['documentPath'] ? 
-        '/uploads_technical/' + req.files['documentPath'][0].filename : null;
+        '/uploads/' + req.files['documentPath'][0].filename : null;
 
       const newInquiry = new Technical_Inquiry({
         title,
