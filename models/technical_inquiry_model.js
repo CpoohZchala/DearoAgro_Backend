@@ -8,7 +8,12 @@ const technical_InquirySchema = new Schema(
     date: {type: Date,required: true,},
     imagePath: {type: String,required: false,},
     documentPath: {type: String,required: false,},
-    status: { type: String, default: "pending" }
+    status: { type: String, default: "pending" },
+    farmerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Farmer',
+      required: true
+    }
   },
   { timestamps: true }
 );
