@@ -11,6 +11,7 @@ const technicalIRoutes = require("./routes/technicalIRoutes");
 const farmerRoutes = require('./routes/farmerRoutes'); 
 const superAdminRoutes = require('./routes/superAdminRoutes');
 const groupRoutes = require('./routes/groupRoutes'); 
+const soilTestReportRoutes= require('./routes/soilTestReportRoutes');
 
 
 
@@ -32,6 +33,7 @@ app.use("/api", technicalIRoutes);
 app.use('/api/farmers', farmerRoutes);
 app.use('/superAdminRoutes', superAdminRoutes);
 app.use('/api/groups', groupRoutes);
+app.use('/api', soilTestReportRoutes);
 
 
 app.use('/uploads', express.static('uploads')); 
