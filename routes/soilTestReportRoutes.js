@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const SoilTestReport = require('./models/soil_test_report');
+const SoilTestReport = require('../models/soil_test_report');
 
 // Create a new soil test report
 router.post('/soil-test', async (req, res) => {
