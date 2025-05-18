@@ -23,7 +23,7 @@ router.get('/soil-test/farmer/:farmerId', async (req, res) => {
   }
 });
 
-// Get a single report by ID
+// Get a single repo+rt by ID
 router.get('/soil-test/:id', async (req, res) => {
   try {
     const report = await SoilTestReport.findById(req.params.id);
