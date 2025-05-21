@@ -69,11 +69,16 @@ router.put('/:id', async (req, res) => {
       return res.status(400).json({ message: 'Invalid farmer ID' });
     }
 
-    const { fullName, mobileNumber } = req.body;
+    const { fullName, mobileNumber ,profileImage } = req.body;
     
+        const updateFields = {};
+    if (fullName !== undefined) updateFields.fullName = fullName;
+    if (mobileNumber !== undefined) updateFields.mobileNumber = mobileNumber;
+    if (profileImage !== undefined) updateFields.profileImage = profileImage; // <-- Add this line
+
     const updatedFarmer = await Farmer.findByIdAndUpdate(
       id,
-      { fullName, mobileNumber },
+      updateFields,
       { new: true, runValidators: true }
     );
     
