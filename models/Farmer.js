@@ -6,6 +6,7 @@ const farmerSchema = new mongoose.Schema({
     password: { type: String, required: true },
     groupId: {type: mongoose.Schema.Types.ObjectId,ref: 'Group',default: null},
     groupName: {type: String,default: null},
+    profileImage: { type: String, default: "" },
     createdAt: {type: Date,default: Date.now},
 });
 
