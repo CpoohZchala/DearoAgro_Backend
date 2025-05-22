@@ -7,6 +7,14 @@ const router = express.Router();
 // Submit Form Data
 router.post("/cropsubmit", async (req, res) => {
   try {
+    const { description, fertilizerType, fertilizerAmount, fertilizerUnit } = req.body;
+
+    if (description === "පොහොර යෙදීම") {
+      if (!fertilizerType || !fertilizerAmount || !fertilizerUnit) {
+        return res.status(400).json({ error: "Fertilizer details required" });
+      }
+    }
+
     const cropData = new CropData(req.body);
     await cropData.save();
     res.status(201).json({ message: "Data submitted successfully!" });
