@@ -2,9 +2,9 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const SuperAdmin = require('../models/SuperAdmin'); // Import the SuperAdmin model
-const Farmer = require('../models/Farmer'); // Import the Farmer model
-const MarketingOfficer = require('../models/MarketingOfficer'); // Import the MarketingOfficer model
+const SuperAdmin = require('../models/SuperAdmin'); 
+const Farmer = require('../models/Farmer'); 
+const MarketingOfficer = require('../models/MarketingOfficer'); 
 const dotenv = require('dotenv');
 const cookieParser = require('cookie-parser');
 

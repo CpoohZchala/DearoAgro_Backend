@@ -7,7 +7,7 @@ const farmerSchema = new mongoose.Schema({
     groupId: { type: mongoose.Schema.Types.ObjectId, ref: 'Group', default: null },
     groupName: { type: String, default: null },
     profileImage: { type: String, default: "" },
-    userType: { type: String, enum: ['Super Admin', 'Farmer', 'Marketing Officer'], required: true },
+    userType: { type: String,default: "" },
     createdAt: { type: Date, default: Date.now },
 });
 
