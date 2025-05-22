@@ -10,7 +10,16 @@ router.post("/cropsubmit", async (req, res) => {
     const { description, fertilizerType, fertilizerAmount, fertilizerUnit } = req.body;
 
     if (description === "පොහොර යෙදීම") {
-      if (!fertilizerType || !fertilizerAmount || !fertilizerUnit) {
+      if (
+        !fertilizerType ||
+        fertilizerType.trim() === "" ||
+        fertilizerAmount === undefined ||
+        fertilizerAmount === null ||
+        fertilizerAmount === "" ||
+        isNaN(Number(fertilizerAmount)) ||
+        !fertilizerUnit ||
+        fertilizerUnit.trim() === ""
+      ) {
         return res.status(400).json({ error: "Fertilizer details required" });
       }
     }
