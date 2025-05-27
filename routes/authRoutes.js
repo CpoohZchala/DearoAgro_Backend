@@ -5,6 +5,7 @@ const User = require('../models/User');
 const SuperAdmin = require('../models/SuperAdmin'); 
 const Farmer = require('../models/Farmer'); 
 const MarketingOfficer = require('../models/MarketingOfficer'); 
+const Buyer = require('../models/Buyer'); // Add this line
 const dotenv = require('dotenv');
 const cookieParser = require('cookie-parser');
 
@@ -70,6 +71,24 @@ router.post('/signup', async (req, res) => {
             // Save the Super Admin in the database
             await superAdmin.save();
             return res.status(201).json({ message: 'Super Admin registered successfully.' });
+        }
+
+        if (userType === 'Buyer') {
+            // Check if the Buyer already exists
+            let buyerExists = await Buyer.findOne({ mobileNumber });
+            if (buyerExists) {
+                return res.status(400).json({ message: 'Buyer already exists with this mobile number.' });
+            }
+
+            // Hash the password
+            const hashedPassword = await bcrypt.hash(password, 10);
+
+            // Create new Buyer
+            const buyer = new Buyer({ fullName, mobileNumber, password: hashedPassword });
+
+            // Save the Buyer in the database
+            await buyer.save();
+            return res.status(201).json({ message: 'Buyer registered successfully.' });
         }
 
         // Check if the user already exists
@@ -190,6 +209,31 @@ router.post('/signin', async (req, res) => {
                 token,
                 userType: 'Marketing Officer',
                 userId: marketingOfficer._id
+            });
+        }
+
+        if (req.body.userType === 'Buyer') {
+            const buyer = await Buyer.findOne({ mobileNumber });
+            if (!buyer) {
+                return res.status(400).json({ message: 'Invalid Credentials' });
+            }
+
+            const isMatch = await bcrypt.compare(password, buyer.password);
+            if (!isMatch) {
+                return res.status(400).json({ message: 'Invalid Credentials' });
+            }
+
+            const token = jwt.sign(
+                { id: buyer._id, userType: 'Buyer' },
+                process.env.JWT_SECRET,
+                { expiresIn: '24h' }
+            );
+
+            return res.status(200).json({
+                message: 'Login successful',
+                token,
+                userType: 'Buyer',
+                userId: buyer._id
             });
         }
 
