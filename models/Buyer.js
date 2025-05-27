@@ -6,6 +6,7 @@ const BuyerSchema = new mongoose.Schema({
   mobileNumber: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   userType: { type: String, enum: ['Buyer'], default: 'Buyer', required: true },
+  profileImage: { type: String, default: "" },
   createdAt: { type: Date, default: Date.now }
 });
 
