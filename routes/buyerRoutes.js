@@ -62,6 +62,20 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Get a single buyer by ID
+router.get('/:id', async (req, res) => {
+  try {
+    const buyer = await Buyer.findById(req.params.id); // Fixed model name
+    if (!buyer) {
+      return res.status(404).json({ message: 'Buyer not found' });
+    }
+    res.json(buyer);
+  } catch (error) {
+    console.error('Error fetching buyer:', error); // Fixed log message
+    res.status(500).json({ message: 'Failed to fetch buyer' });
+  }
+});
+
 // Delete a buyer by ID
 router.delete('/:id', async (req, res) => {
   try {
