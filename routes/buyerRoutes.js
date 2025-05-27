@@ -97,4 +97,23 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// Update a buyer by ID
+router.put('/:id', async (req, res) => {
+  try {
+    const { fullName, mobileNumber, profileImage } = req.body;
+    // Do not allow password update here for security (handle separately if needed)
+    const updatedBuyer = await Buyer.findByIdAndUpdate(
+      req.params.id,
+      { fullName, mobileNumber, profileImage },
+      { new: true, runValidators: true, select: '-password' }
+    );
+    if (!updatedBuyer) {
+      return res.status(404).json({ error: 'Buyer not found' });
+    }
+    res.status(200).json({ message: 'Buyer updated successfully', buyer: updatedBuyer });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update buyer' });
+  }
+});
+
 module.exports = router;
