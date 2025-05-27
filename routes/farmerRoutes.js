@@ -74,7 +74,7 @@ router.put('/:id', async (req, res) => {
         const updateFields = {};
     if (fullName !== undefined) updateFields.fullName = fullName;
     if (mobileNumber !== undefined) updateFields.mobileNumber = mobileNumber;
-    if (profileImage !== undefined) updateFields.profileImage = profileImage; // <-- Add this line
+    if (profileImage !== undefined) updateFields.profileImage = profileImage; 
 
     const updatedFarmer = await Farmer.findByIdAndUpdate(
       id,

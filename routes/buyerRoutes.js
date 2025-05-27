@@ -7,7 +7,11 @@ const router = express.Router();
 // Register a new buyer
 router.post('/register', async (req, res) => {
   try {
-    const { fullName, mobileNumber, password } = req.body;
+    const { fullName, mobileNumber, password, profileImage } = req.body;
+
+    if (!fullName || !mobileNumber || !password) {
+      return res.status(400).json({ error: 'All fields are required' });
+    }
 
     // Check if buyer already exists
     const existingBuyer = await Buyer.findOne({ mobileNumber });
@@ -21,7 +25,9 @@ router.post('/register', async (req, res) => {
     const buyer = new Buyer({
       fullName,
       mobileNumber,
-      password: hashedPassword
+      password: hashedPassword,
+      profileImage // optional, will use default if not provided
+      // userType will default to 'Buyer'
     });
 
     await buyer.save();
@@ -46,32 +52,34 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Invalid credentials' });
     }
 
-    res.status(200).json({ message: 'Login successful', buyer });
+    // Exclude password from response
+    const { password: _, ...buyerData } = buyer.toObject();
+    res.status(200).json({ message: 'Login successful', buyer: buyerData });
   } catch (error) {
     res.status(500).json({ error: 'Login failed' });
   }
 });
 
-// Get all buyers
+// Get all buyers (exclude password)
 router.get('/', async (req, res) => {
   try {
-    const buyers = await Buyer.find();
+    const buyers = await Buyer.find().select('-password');
     res.status(200).json(buyers);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch buyers' });
   }
 });
 
-// Get a single buyer by ID
+// Get a single buyer by ID (exclude password)
 router.get('/:id', async (req, res) => {
   try {
-    const buyer = await Buyer.findById(req.params.id); // Fixed model name
+    const buyer = await Buyer.findById(req.params.id).select('-password');
     if (!buyer) {
       return res.status(404).json({ message: 'Buyer not found' });
     }
     res.json(buyer);
   } catch (error) {
-    console.error('Error fetching buyer:', error); // Fixed log message
+    console.error('Error fetching buyer:', error);
     res.status(500).json({ message: 'Failed to fetch buyer' });
   }
 });
