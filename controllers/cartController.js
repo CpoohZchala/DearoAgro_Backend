@@ -1,16 +1,37 @@
 const Cart = require('../models/Cart');
+const jwt = require('jsonwebtoken');
+
+// Middleware to authenticate user
+const authenticate = (req, res, next) => {
+    // Example: Decode token and set req.user
+    const token = req.headers.authorization.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = { id: decoded.id };
+    next();
+};
 
 // Add item to cart
 exports.addToCart = async (req, res) => {
     try {
         const { productId, quantity } = req.body;
-        const userId = req.user.id;
 
+        // Validate request body
+        if (!productId || !quantity) {
+            return res.status(400).json({ message: 'Product ID and quantity are required' });
+        }
+
+        const userId = req.user?.id; // Ensure req.user exists
+        if (!userId) {
+            return res.status(401).json({ message: 'Unauthorized: User not found' });
+        }
+
+        // Find or create cart
         let cart = await Cart.findOne({ userId });
         if (!cart) {
             cart = new Cart({ userId, items: [] });
         }
 
+        // Check if item already exists in cart
         const existingItem = cart.items.find(item => item.productId.toString() === productId);
         if (existingItem) {
             existingItem.quantity += quantity;
@@ -18,9 +39,11 @@ exports.addToCart = async (req, res) => {
             cart.items.push({ productId, quantity });
         }
 
+        // Save cart
         await cart.save();
         res.status(201).json({ message: 'Item added to cart' });
     } catch (error) {
+        console.error('Error adding item to cart:', error);
         res.status(500).json({ message: 'Error adding item to cart' });
     }
 };
