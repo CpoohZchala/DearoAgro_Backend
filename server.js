@@ -13,6 +13,9 @@ const superAdminRoutes = require('./routes/superAdminRoutes');
 const groupRoutes = require('./routes/groupRoutes'); 
 const soilTestReportRoutes= require('./routes/soilTestReportRoutes');
 const buyerRoutes = require('./routes/buyerRoutes');
+const productRoutes = require('./routes/productRoutes');
+const cartRoutes = require('./routes/cartRoutes');
+const checkoutRoutes = require('./routes/checkoutRoute');
 
 
 
@@ -36,7 +39,9 @@ app.use('/superAdminRoutes', superAdminRoutes);
 app.use('/api/groups', groupRoutes);
 app.use('/api', soilTestReportRoutes);
 app.use('/api/buyers', buyerRoutes);
-
+app.use('/api', productRoutes);
+app.use('/api', cartRoutes);
+app.use('/api', checkoutRoutes);
 
 app.use('/uploads', express.static('uploads')); 
 
