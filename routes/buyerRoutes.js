@@ -26,8 +26,7 @@ router.post('/register', async (req, res) => {
       fullName,
       mobileNumber,
       password: hashedPassword,
-      profileImage // optional, will use default if not provided
-      // userType will default to 'Buyer'
+      profileImage 
     });
 
     await buyer.save();
@@ -113,6 +112,31 @@ router.put('/:id', async (req, res) => {
     res.status(200).json({ message: 'Buyer updated successfully', buyer: updatedBuyer });
   } catch (error) {
     res.status(500).json({ error: 'Failed to update buyer' });
+  }
+});
+
+// Add this to your buyers route file (after your other routes)
+router.post('/:id/change-password', async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    const buyer = await Buyer.findById(req.params.id);
+    if (!buyer) {
+      return res.status(404).json({ message: 'Buyer not found' });
+    }
+
+    // Check old password
+    const isMatch = await bcrypt.compare(oldPassword, buyer.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Old password is incorrect' });
+    }
+
+    // Update to new password
+    buyer.password = await bcrypt.hash(newPassword, 10);
+    await buyer.save();
+
+    res.status(200).json({ message: 'Password updated successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
