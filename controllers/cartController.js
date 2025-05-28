@@ -4,7 +4,7 @@ const Cart = require('../models/Cart');
 exports.addToCart = async (req, res) => {
     try {
         const { productId, quantity } = req.body;
-        const userId = req.user.id; // Assuming user ID is available in req.user
+        const userId = req.user.id;
 
         let cart = await Cart.findOne({ userId });
         if (!cart) {
@@ -28,7 +28,7 @@ exports.addToCart = async (req, res) => {
 // Get cart contents
 exports.getCartContents = async (req, res) => {
     try {
-        const userId = req.user.id; // Assuming user ID is available in req.user
+        const userId = req.user.id;
         const cart = await Cart.findOne({ userId }).populate('items.productId');
 
         if (!cart) {
@@ -45,7 +45,7 @@ exports.getCartContents = async (req, res) => {
 exports.removeFromCart = async (req, res) => {
     try {
         const { itemId } = req.params;
-        const userId = req.user.id; // Assuming user ID is available in req.user
+        const userId = req.user.id;
 
         const cart = await Cart.findOne({ userId });
         if (!cart) {
@@ -64,7 +64,7 @@ exports.removeFromCart = async (req, res) => {
 // Clear cart
 exports.clearCart = async (req, res) => {
     try {
-        const userId = req.user.id; // Assuming user ID is available in req.user
+        const userId = req.user.id;
 
         const cart = await Cart.findOne({ userId });
         if (!cart) {

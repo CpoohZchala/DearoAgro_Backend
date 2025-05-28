@@ -23,14 +23,22 @@ exports.getProductById = async (req, res) => {
 
 // Add a new product
 exports.addProduct = async (req, res) => {
-  const { name, price, image, category } = req.body;
-  try {
-    const newProduct = new Product({ name, price, image, category });
-    await newProduct.save();
-    res.status(201).json(newProduct);
-  } catch (error) {
-    res.status(500).json({ message: 'Error adding product' });
-  }
+    try {
+        const { name, price, image, category } = req.body;
+
+        // Validate input
+        if (!name || !price || !image || !category) {
+            return res.status(400).json({ message: 'All fields are required' });
+        }
+
+        // Create a new product
+        const product = new Product({ name, price, image, category });
+        await product.save();
+
+        res.status(201).json(product);
+    } catch (error) {
+        res.status(500).json({ message: 'Error adding product' });
+    }
 };
 
 // Update a product by ID
