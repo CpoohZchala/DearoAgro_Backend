@@ -40,7 +40,7 @@ app.use('/api/groups', groupRoutes);
 app.use('/api', soilTestReportRoutes);
 app.use('/api/buyers', buyerRoutes);
 app.use('/api', productRoutes);
-app.use('/api', cartRoutes);
+app.use('/api/cart', cartRoutes);
 app.use('/api', checkoutRoutes);
 
 app.use('/uploads', express.static('uploads')); 
