@@ -130,3 +130,26 @@ exports.clearCart = async (req, res) => {
         res.status(500).json({ message: 'Error clearing cart' });
     }
 };
+
+// Add this to your cartController.js
+exports.cleanCart = async (userId) => {
+    const cart = await Cart.findOne({ userId });
+    if (!cart) return;
+    
+    // Get all product IDs referenced in cart
+    const productIds = cart.items.map(item => item.productId);
+    
+    // Check which products still exist
+    const existingProducts = await Product.find({ 
+        _id: { $in: productIds } 
+    }).select('_id');
+    
+    const existingProductIds = existingProducts.map(p => p._id.toString());
+    
+    // Filter out items with missing products
+    cart.items = cart.items.filter(item => 
+        existingProductIds.includes(item.productId.toString())
+    );
+    
+    await cart.save();
+};
