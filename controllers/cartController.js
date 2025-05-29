@@ -48,40 +48,28 @@ exports.addToCart = async (req, res) => {
 };
 
 // Get cart contents
-exports.getCartContents = async (req, res) => {
+exports.getCartContents = async (req, res, next) => {
     try {
-        const userId = req.user.id;
-        const cart = await Cart.findOne({ userId })
-            .populate({
-                path: 'items.productId',
-                model: 'Product',
-                select: 'name price image',
-                options: { lean: true }
-            })
-            .lean();
-
+        const cart = await Cart.findOne({ userId: req.user._id }).populate('items.productId');
         if (!cart) {
-            return res.status(200).json({ items: [] });
+            return res.status(404).json({ message: 'Cart not found' });
         }
 
-        // Filter out items with missing products
-        const validItems = cart.items.filter(item => item.productId !== null && item.productId !== undefined);
+        console.log('Cart items:', cart.items); // Debug log
 
-        // Calculate total price
-        const totalPrice = validItems.reduce((sum, item) => {
-            return sum + (item.productId.price * item.quantity);
-        }, 0);
+        // Verify each productId
+        for (const item of cart.items) {
+            const product = await Product.findById(item.productId);
+            console.log('Product fetched for ID:', item.productId, product); // Debug log
+            if (!product) {
+                throw new Error(`Product not found for ID: ${item.productId}`);
+            }
+        }
 
-        res.status(200).json({
-            items: validItems,
-            totalPrice
-        });
+        res.status(200).json(cart);
     } catch (error) {
         console.error('Error fetching cart contents:', error);
-        res.status(500).json({ 
-            message: 'Error fetching cart contents', 
-            error: error.message 
-        });
+        res.status(500).json({ message: 'Error fetching product by ID' });
     }
 };
 
