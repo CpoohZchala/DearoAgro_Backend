@@ -1,4 +1,5 @@
 const Cart = require('../models/Cart');
+const Product = require('../models/Product');
 const jwt = require('jsonwebtoken');
 
 // Middleware to authenticate user
@@ -13,11 +14,16 @@ const authenticate = (req, res, next) => {
 // Add item to cart
 exports.addToCart = async (req, res) => {
     try {
-        const { productId, quantity } = req.body;
+        const { productId } = req.body;
 
-        // Validate request body
-        if (!productId || !quantity) {
-            return res.status(400).json({ message: 'Product ID and quantity are required' });
+        if (!productId) {
+            return res.status(400).json({ message: 'Product ID is required' });
+        }
+
+        const product = await Product.findById(productId);
+
+        if (!product) {
+            return res.status(404).json({ message: 'Product not found' });
         }
 
         const userId = req.user?.id; // Ensure req.user exists
@@ -34,9 +40,9 @@ exports.addToCart = async (req, res) => {
         // Check if item already exists in cart
         const existingItem = cart.items.find(item => item.productId.toString() === productId);
         if (existingItem) {
-            existingItem.quantity += quantity;
+            existingItem.quantity += 1;
         } else {
-            cart.items.push({ productId, quantity });
+            cart.items.push({ productId, quantity: 1 });
         }
 
         // Save cart
