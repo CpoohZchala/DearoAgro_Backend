@@ -60,7 +60,8 @@ exports.getCartContents = async (req, res) => {
 
         res.status(200).json(cart);
     } catch (error) {
-        res.status(500).json({ message: 'Error fetching cart contents' });
+        console.error('Error fetching cart contents:', error);
+        res.status(500).json({ message: 'Error fetching product by ID', error: error.message });
     }
 };
 
