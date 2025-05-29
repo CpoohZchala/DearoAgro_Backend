@@ -62,26 +62,27 @@ exports.getCartContents = async (req, res) => {
             .populate({
                 path: 'items.productId',
                 model: 'Product',
-                select: 'name price image' // Explicitly select fields
+                select: 'name price image',
+                options: { lean: true }
             })
-            .lean(); // Convert to plain JavaScript object
+            .lean();
 
         if (!cart) {
             return res.status(200).json({ items: [] });
         }
 
-        // Ensure items array exists and has the right structure
-        const response = {
-            items: cart.items.map(item => ({
-                _id: item._id,
-                quantity: item.quantity,
-                productId: item.productId // This should now be populated
-            })),
-            totalPrice: cart.totalPrice || 0
-        };
+        // Filter out items with missing products
+        const validItems = cart.items.filter(item => item.productId !== null && item.productId !== undefined);
 
-        console.log('Sending cart response:', response); // Debug
-        res.status(200).json(response);
+        // Calculate total price
+        const totalPrice = validItems.reduce((sum, item) => {
+            return sum + (item.productId.price * item.quantity);
+        }, 0);
+
+        res.status(200).json({
+            items: validItems,
+            totalPrice
+        });
     } catch (error) {
         console.error('Error fetching cart contents:', error);
         res.status(500).json({ 
