@@ -7,7 +7,15 @@ const authenticate = require('../middleware/authMiddleware');
 router.post('/add', authenticate, cartController.addToCart);
 
 // Get cart contents
-router.get('/', authenticate, cartController.getCartContents);
+router.get('/', authenticate, async (req, res, next) => {
+    try {
+        console.log('Fetching cart contents for user:', req.user); // Debug log
+        await cartController.getCartContents(req, res, next);
+    } catch (error) {
+        console.error('Error in GET /cart route:', error); // Log the error
+        next(error); // Pass the error to the error handler
+    }
+});
 
 // Remove item from cart
 router.delete('/remove/:itemId', authenticate, cartController.removeFromCart);

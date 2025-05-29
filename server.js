@@ -18,7 +18,6 @@ const cartRoutes = require('./routes/cartRoutes');
 const checkoutRoutes = require('./routes/checkoutRoute');
 
 
-
 // Connect to MongoDB
 connectDB();
 
@@ -44,7 +43,6 @@ app.use('/api/cart', cartRoutes);
 app.use('/api', checkoutRoutes);
 
 app.use('/uploads', express.static('uploads')); 
-
 
 
 // Server
