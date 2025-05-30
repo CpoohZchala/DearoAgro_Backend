@@ -16,6 +16,8 @@ const buyerRoutes = require('./routes/buyerRoutes');
 const productRoutes = require('./routes/productRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const checkoutRoutes = require('./routes/checkoutRoute');
+const marketingOfficerRoutes = require('./routes/marketingOfficerRoutes');
+
 
 
 // Connect to MongoDB
@@ -41,6 +43,8 @@ app.use('/api/buyers', buyerRoutes);
 app.use('/api', productRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api', checkoutRoutes);
+app.use('/api/marketing-officers', marketingOfficerRoutes);
+
 
 app.use('/uploads', express.static('uploads')); 
 
