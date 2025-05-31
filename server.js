@@ -43,7 +43,7 @@ app.use('/api/buyers', buyerRoutes);
 app.use('/api', productRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api', checkoutRoutes);
-app.use('/api/marketing-officers', marketingOfficerRoutes);
+app.use('/api/officers', marketingOfficerRoutes);
 
 
 app.use('/uploads', express.static('uploads')); 
