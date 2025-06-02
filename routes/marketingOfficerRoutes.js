@@ -69,6 +69,7 @@ router.get('/', async (req, res) => {
   }
 });
 
+
 // Get a single marketing officer by ID (exclude password)
 router.get('/:id', async (req, res) => {
   try {
@@ -83,6 +84,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+
 // Delete a marketing officer by ID
 router.delete('/:id', async (req, res) => {
   try {
@@ -95,6 +97,7 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({ error: 'Failed to delete marketing officer' });
   }
 });
+
 
 // Update a marketing officer by ID
 router.put('/:id', async (req, res) => {
@@ -114,6 +117,7 @@ router.put('/:id', async (req, res) => {
     res.status(500).json({ error: 'Failed to update marketing officer' });
   }
 });
+
 
 // Change password for a marketing officer
 router.post('/:id/change-password', async (req, res) => {

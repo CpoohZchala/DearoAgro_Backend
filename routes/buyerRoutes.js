@@ -115,6 +115,7 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+
 // Add this to your buyers route file (after your other routes)
 router.post('/:id/change-password', async (req, res) => {
   try {

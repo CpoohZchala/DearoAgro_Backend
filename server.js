@@ -40,7 +40,7 @@ app.use('/superAdminRoutes', superAdminRoutes);
 app.use('/api/groups', groupRoutes);
 app.use('/api', soilTestReportRoutes);
 app.use('/api/buyers', buyerRoutes);
-app.use('/api', productRoutes);
+app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api', checkoutRoutes);
 app.use('/api/officers', marketingOfficerRoutes);
