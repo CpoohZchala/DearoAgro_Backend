@@ -48,28 +48,18 @@ exports.addToCart = async (req, res) => {
 };
 
 // Get cart contents
-exports.getCartContents = async (req, res, next) => {
+exports.getCartContents = async (req, res) => {
     try {
-        const cart = await Cart.findOne({ userId: req.user._id }).populate('items.productId');
+        const userId = req.params.userId; // Get userId from the route parameter
+        const cart = await Cart.findOne({ userId }).populate('items.productId');
         if (!cart) {
             return res.status(404).json({ message: 'Cart not found' });
-        }
-
-        console.log('Cart items:', cart.items); // Debug log
-
-        // Verify each productId
-        for (const item of cart.items) {
-            const product = await Product.findById(item.productId);
-            console.log('Product fetched for ID:', item.productId, product); // Debug log
-            if (!product) {
-                throw new Error(`Product not found for ID: ${item.productId}`);
-            }
         }
 
         res.status(200).json(cart);
     } catch (error) {
         console.error('Error fetching cart contents:', error);
-        res.status(500).json({ message: 'Error fetching product by ID' });
+        res.status(500).json({ message: 'Error fetching cart contents' });
     }
 };
 

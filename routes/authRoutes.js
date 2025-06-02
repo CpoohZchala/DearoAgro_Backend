@@ -5,7 +5,7 @@ const User = require('../models/User');
 const SuperAdmin = require('../models/SuperAdmin'); 
 const Farmer = require('../models/Farmer'); 
 const MarketingOfficer = require('../models/MarketingOfficer'); 
-const Buyer = require('../models/Buyer'); // Add this line
+const Buyer = require('../models/Buyer');
 const dotenv = require('dotenv');
 const cookieParser = require('cookie-parser');
 

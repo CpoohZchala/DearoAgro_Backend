@@ -7,7 +7,7 @@ const authenticate = require('../middleware/authMiddleware');
 router.post('/add', authenticate, cartController.addToCart);
 
 // Get cart contents
-router.get('/', authenticate, async (req, res, next) => {
+router.get('/cart/:userId', authenticate, async (req, res, next) => {
     try {
         console.log('Fetching cart contents for user:', req.user); // Debug log
         await cartController.getCartContents(req, res, next);
