@@ -42,7 +42,7 @@ app.use('/api', soilTestReportRoutes);
 app.use('/api/buyers', buyerRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes);
-app.use('/api', checkoutRoutes);
+app.use('/apicheckouts', checkoutRoutes);
 app.use('/api/officers', marketingOfficerRoutes);
 
 

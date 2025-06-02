@@ -1,13 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const cartController = require('../controllers/cartController');
-const authenticate = require('../middleware/authMiddleware');
 
 // Add item to cart
-router.post('/add', authenticate, cartController.addToCart);
+router.post('/add', cartController.addToCart);
 
 // Get cart contents
-router.get('/cart/:userId', authenticate, async (req, res, next) => {
+router.get('/cart/:userId', async (req, res, next) => {
     try {
         console.log('Fetching cart contents for user:', req.user); // Debug log
         await cartController.getCartContents(req, res, next);
@@ -18,9 +17,9 @@ router.get('/cart/:userId', authenticate, async (req, res, next) => {
 });
 
 // Remove item from cart
-router.delete('/remove/:itemId', authenticate, cartController.removeFromCart);
+router.delete('/remove/:itemId', cartController.removeFromCart);
 
 // Clear cart
-router.delete('/clear', authenticate, cartController.clearCart);
+router.delete('/clear', cartController.clearCart);
 
 module.exports = router;
