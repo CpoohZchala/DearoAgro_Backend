@@ -71,7 +71,7 @@ router.get('/', async (req, res) => {
 
 
 // Get a single marketing officer by ID (exclude password)
-router.get('/:id', async (req, res) => {
+router.get('/api/officers/:userId', async (req, res) => {
   try {
     const officer = await MarketingOfficer.findById(req.params.id).select('-password');
     if (!officer) {
@@ -100,7 +100,7 @@ router.delete('/:id', async (req, res) => {
 
 
 // Update a marketing officer by ID
-router.put('/:id', async (req, res) => {
+router.put('/api/officers/:userId', async (req, res) => {
   try {
     const { fullName, mobileNumber, profileImage } = req.body;
     // Do not allow password update here for security (handle separately if needed)
