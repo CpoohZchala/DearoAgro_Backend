@@ -7,9 +7,9 @@ const router = express.Router();
 // Register a new marketing officer
 router.post('/register', async (req, res) => {
   try {
-    const { fullName, mobileNumber, password, profileImage } = req.body;
+    const { fullName, mobileNumber, password, profileImage,branchName } = req.body;
 
-    if (!fullName || !mobileNumber || !password) {
+    if (!fullName || !mobileNumber || !password ||!branchName ) {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
@@ -27,6 +27,7 @@ router.post('/register', async (req, res) => {
       mobileNumber,
       password: hashedPassword,
       profileImage,
+      branchName
     });
 
     await officer.save();
