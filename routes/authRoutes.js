@@ -174,7 +174,7 @@ router.post('/signin', async (req, res) => {
             const token = jwt.sign(
                 { id: farmer._id, userType: 'Farmer' },
                 process.env.JWT_SECRET,
-                { expiresIn: '24h' }
+                { expiresIn: '1h' }
             );
 
             return res.status(200).json({
@@ -201,7 +201,7 @@ router.post('/signin', async (req, res) => {
             const token = jwt.sign(
                 { id: marketingOfficer._id, userType: 'Marketing Officer' },
                 process.env.JWT_SECRET,
-                { expiresIn: '24h' }
+                { expiresIn: '1h' }
             );
 
             return res.status(200).json({
@@ -226,7 +226,7 @@ router.post('/signin', async (req, res) => {
             const token = jwt.sign(
                 { id: buyer._id, userType: 'Buyer' },
                 process.env.JWT_SECRET,
-                { expiresIn: '24h' }
+                { expiresIn: '1h' }
             );
 
             return res.status(200).json({
@@ -252,7 +252,7 @@ router.post('/signin', async (req, res) => {
         const token = jwt.sign(
             { id: user._id, userType: user.userType }, 
             process.env.JWT_SECRET, 
-            { expiresIn: '24h' }
+            { expiresIn: '1h' }
         );
 
         res.status(200).json({ 
