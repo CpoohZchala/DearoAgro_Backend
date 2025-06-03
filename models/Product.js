@@ -1,19 +1,15 @@
-class ProductModel {
-    constructor(id, name, price, quantity) {
-        this.id = id;
-        this.name = name;
-        this.price = price;
-        this.quantity = quantity;
-    }
+const mongoose = require('mongoose');
 
-    getDetails() {
-        return {
-            id: this.id,
-            name: this.name,
-            price: this.price,
-            quantity: this.quantity
-        };
-    }
-}
+// Define the Product schema
+const productSchema = new mongoose.Schema({
+    name: { type: String, required: true },
+    price: { type: Number, required: true },
+    image: { type: String, required: true },
+    category: { type: String, required: true },
+    quantity: { type: Number, default: 0 }
+});
 
-module.exports = ProductModel;
+// Create the Product model
+const Product = mongoose.model('Product', productSchema);
+
+module.exports = Product;
