@@ -7,7 +7,8 @@ const farmerSchema = new mongoose.Schema({
     groupId: { type: mongoose.Schema.Types.ObjectId, ref: 'Group', default: null },
     groupName: { type: String, default: null },
     profileImage: { type: String, default: "" },
-    userType: { type: String,default: "Farmer" },
+    userType: { type: String, default: "Farmer" },
+    branchName: { type: String, default: null },
     createdAt: { type: Date, default: Date.now },
 });
 
