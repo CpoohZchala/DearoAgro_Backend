@@ -1,12 +1,8 @@
 const express = require('express');
-const { placeOrder, calculateTotal } = require('../controllers/checkoutController');
+const { processCheckout } = require('../controllers/checkoutController');
 
 const router = express.Router();
 
-// Place an order
-router.post('/order', placeOrder);
-
-// Calculate total price
-router.post('/total', calculateTotal);
+router.post('/', processCheckout); // Handle checkout process
 
 module.exports = router;

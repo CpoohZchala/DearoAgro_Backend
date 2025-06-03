@@ -1,6 +1,6 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
-const MarketingOfficer = require('../models/MarketingOfficer'); // Assuming you have a MarketingOfficer model
+const MarketingOfficer = require('../models/MarketingOfficer');
 
 const router = express.Router();
 
@@ -102,10 +102,11 @@ router.delete('/:id', async (req, res) => {
 // Update a marketing officer by ID
 router.put('/:id', async (req, res) => {
   try {
-    const { fullName, mobileNumber, profileImage, branchName } = req.body; // Include branchName in the request body
+    console.log("Request Body:", req.body);
+    const { fullName, mobileNumber, profileImage, branchName } = req.body;
     const updatedOfficer = await MarketingOfficer.findByIdAndUpdate(
       req.params.id,
-      { fullName, mobileNumber, profileImage, branchName }, // Add branchName to the update object
+      { fullName, mobileNumber, profileImage, branchName },
       { new: true, runValidators: true, select: '-password' }
     );
     if (!updatedOfficer) {

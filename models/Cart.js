@@ -1,31 +1,32 @@
-const mongoose = require('mongoose');
+class CartModel {
+    constructor() {
+        this.items = [];
+    }
 
-const cartItemSchema = new mongoose.Schema({
-  productId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Product',
-    required: true
-  },
-  quantity: {
-    type: Number,
-    required: true,
-    min: 1
-  }
-});
+    addItem(product) {
+        const existingItem = this.items.find(item => item.productId === product.id);
+        if (existingItem) {
+            existingItem.quantity += 1;
+        } else {
+            this.items.push({ productId: product.id, quantity: 1 });
+        }
+    }
 
-const cartSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  items: [cartItemSchema],
-  totalPrice: {
-    type: Number,
-    default: 0
-  }
-}, { timestamps: true });
+    removeItem(productId) {
+        this.items = this.items.filter(item => item.productId !== productId);
+    }
 
-const Cart = mongoose.model('Cart', cartSchema);
+    getItems() {
+        return this.items;
+    }
 
-module.exports = Cart;
+    clearCart() {
+        this.items = [];
+    }
+
+    getTotalItems() {
+        return this.items.reduce((total, item) => total + item.quantity, 0);
+    }
+}
+
+module.exports = CartModel;

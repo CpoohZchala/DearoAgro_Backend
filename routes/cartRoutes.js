@@ -1,25 +1,10 @@
 const express = require('express');
+const { CartController } = require('../controllers/cartController');
+
 const router = express.Router();
-const cartController = require('../controllers/cartController');
+const cartController = new CartController();
 
-// Add item to cart
-router.post('/add', cartController.addToCart);
-
-// Get cart contents
-router.get('/cart/:userId', async (req, res, next) => {
-    try {
-        console.log('Fetching cart contents for user:', req.user); // Debug log
-        await cartController.getCartContents(req, res, next);
-    } catch (error) {
-        console.error('Error in GET /cart route:', error); // Log the error
-        next(error); // Pass the error to the error handler
-    }
-});
-
-// Remove item from cart
-router.delete('/remove/:itemId', cartController.removeFromCart);
-
-// Clear cart
-router.delete('/clear', cartController.clearCart);
+router.post('/add', cartController.addToCart);      // Add product to cart
+router.delete('/remove/:id', cartController.removeFromCart); // Remove product from cart
 
 module.exports = router;
