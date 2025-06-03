@@ -39,7 +39,7 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ message: 'Mobile number already exists' });
     }
 
-    const newFarmer = new Farmer({ fullName, mobileNumber, password });
+    const newFarmer = new Farmer({ fullName, mobileNumber, password ,branchName });
     const savedFarmer = await newFarmer.save();
     console.log('Saved Farmer:', savedFarmer);
     res.status(201).json(savedFarmer);
