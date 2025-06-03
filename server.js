@@ -14,8 +14,8 @@ const groupRoutes = require('./routes/groupRoutes');
 const soilTestReportRoutes= require('./routes/soilTestReportRoutes');
 const buyerRoutes = require('./routes/buyerRoutes');
 const productRoutes = require('./routes/productRoutes');
-const cartRoutes = require('./routes/cartRoutes');
-const checkoutRoutes = require('./routes/checkoutRoute');
+// const cartRoutes = require('./routes/cartRoutes');
+// const checkoutRoutes = require('./routes/checkoutRoute');
 const marketingOfficerRoutes = require('./routes/marketingOfficerRoutes');
 
 
@@ -41,8 +41,8 @@ app.use('/api/groups', groupRoutes);
 app.use('/api', soilTestReportRoutes);
 app.use('/api/buyers', buyerRoutes);
 app.use('/api/products', productRoutes);
-app.use('/api/cart', cartRoutes);
-app.use('/apicheckouts', checkoutRoutes);
+// app.use('/api/cart', cartRoutes);
+// app.use('/apicheckouts', checkoutRoutes);
 app.use('/api/officers', marketingOfficerRoutes);
 
 
