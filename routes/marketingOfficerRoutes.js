@@ -102,11 +102,10 @@ router.delete('/:id', async (req, res) => {
 // Update a marketing officer by ID
 router.put('/:id', async (req, res) => {
   try {
-    const { fullName, mobileNumber, profileImage } = req.body;
-    // Do not allow password update here for security (handle separately if needed)
+    const { fullName, mobileNumber, profileImage, branchName } = req.body; // Include branchName in the request body
     const updatedOfficer = await MarketingOfficer.findByIdAndUpdate(
       req.params.id,
-      { fullName, mobileNumber, profileImage },
+      { fullName, mobileNumber, profileImage, branchName }, // Add branchName to the update object
       { new: true, runValidators: true, select: '-password' }
     );
     if (!updatedOfficer) {
