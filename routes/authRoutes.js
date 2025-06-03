@@ -297,4 +297,25 @@ router.get('/me', async (req, res) => {
     }
 });
 
+// Refresh Token
+router.post('/refresh-token', (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ message: 'Please authenticate' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET, { ignoreExpiration: true }); // Ignore expiration
+    const newToken = jwt.sign(
+      { id: decoded.id, userType: decoded.userType },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRE } // Use JWT_EXPIRE from .env
+    );
+    res.status(200).json({ token: newToken });
+  } catch (error) {
+    console.error('Token refresh error:', error);
+    return res.status(403).json({ message: 'Invalid token' });
+  }
+});
+
 module.exports = router;
