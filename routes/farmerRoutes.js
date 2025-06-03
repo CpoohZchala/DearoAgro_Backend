@@ -31,7 +31,7 @@ router.get('/:id', async (req, res) => {
 // Check for duplicate mobileNumber before creating a new farmer
 router.post('/', async (req, res) => {
   try {
-    const { fullName, mobileNumber, password } = req.body;
+    const { fullName, mobileNumber, password , branchName } = req.body;
 
     // Check if mobileNumber already exists
     const existingFarmer = await Farmer.findOne({ mobileNumber });
