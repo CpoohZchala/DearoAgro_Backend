@@ -4,7 +4,7 @@ const {
   getOrders, 
   getOrderById 
 } = require('../controllers/orderController');
-const auth = require('../middleware/auth');
+const auth = require('../middleware/authenticate');
 
 const router = express.Router();
 
