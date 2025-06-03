@@ -1,12 +1,12 @@
 const express = require('express');
-const CartController = require('../controllers/cartController'); // Correct import
+const CartController = require('../controllers/cartController'); 
 
-const cartController = new CartController(); // Instantiate the class
+const cartController = new CartController();
 
 const router = express.Router();
 
-router.post('/add', cartController.addToCart); // Add to cart route
-router.delete('/remove/:id', cartController.removeFromCart); // Remove from cart route
-router.get('/', cartController.getCart); // Get cart details route
+router.post('/add', cartController.addToCart); 
+router.delete('/remove/:id', cartController.removeFromCart); 
+router.get('/', cartController.getCart); 
 
 module.exports = router;
