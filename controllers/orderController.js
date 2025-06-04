@@ -1,3 +1,4 @@
+const mongoose = require('mongoose'); // Add this if not already imported
 const Order = require('../models/Order');
 const Cart = require('../models/Cart');
 
