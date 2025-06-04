@@ -62,7 +62,6 @@ exports.getOrders = async (req, res) => {
                               .sort({ createdAt: -1 })
                               .populate('items.productId', 'name image');
 
-    console.log('Orders found:', orders); // Add this for debugging
     res.status(200).json(orders);
   } catch (error) {
     console.error(error);
@@ -88,4 +87,23 @@ exports.getOrderById = async (req, res) => {
     console.error(error);
     res.status(500).json({ message: 'Error fetching order' });
   }
+
+  // Delete order by ID
+exports.deleteOrder = async (req, res) => {
+  try {
+    const order = await Order.findOneAndDelete({ 
+      _id: req.params.id, 
+      buyerId: req.user.id 
+    });
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found or not authorized to delete' });
+    }
+
+    res.status(200).json({ message: 'Order deleted successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error deleting order' });
+  }
+};
 };

@@ -1,5 +1,5 @@
 const express = require('express');
-const { createOrder, getOrders, getOrderById } = require('../controllers/orderController');
+const { createOrder, getOrders, getOrderById ,deleteOrder} = require('../controllers/orderController');
 const authenticate = require('../middleware/authenticate');
 
 const router = express.Router();
@@ -15,5 +15,8 @@ router.get('/', getOrders);
 
 // Get a specific order by ID
 router.get('/:id', getOrderById);
+
+//Delete Order
+router.delete('/orders/:id', deleteOrder);
 
 module.exports = router;
