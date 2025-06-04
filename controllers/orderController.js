@@ -1,4 +1,4 @@
-const mongoose = require('mongoose'); // Add this if not already imported
+const mongoose = require('mongoose');
 const Order = require('../models/Order');
 const Cart = require('../models/Cart');
 
@@ -20,7 +20,7 @@ exports.createOrder = async (req, res) => {
     
     // Create order items from cart items
     const orderItems = cart.items.map(item => ({
-      productId: item.product._id, // Ensure productId matches the schema
+      productId: item.product._id,
       quantity: item.quantity,
       price: item.price,
       name: item.name
@@ -28,14 +28,15 @@ exports.createOrder = async (req, res) => {
     
     // Create order
     const order = new Order({
-      buyerId: req.user.id, // Ensure buyerId matches the schema
+      buyerId: req.user.id,
       items: orderItems,
-      totalAmount: cart.total, // Ensure totalAmount matches the schema
+      totalAmount: cart.total,
       shippingAddress,
       paymentMethod
     });
     
     await order.save();
+    console.log('Order created:', order);
     
     // Clear cart
     await Cart.findOneAndUpdate(
@@ -53,6 +54,7 @@ exports.createOrder = async (req, res) => {
 // Get buyer's orders
 exports.getOrders = async (req, res) => {
   try {
+    console.log('Fetching orders for user ID:', req.user.id);
     const orders = await Order.find({ buyer: req.user.id })
                             .sort({ createdAt: -1 })
                             .populate('items.product', 'name image');
