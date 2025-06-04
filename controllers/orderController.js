@@ -55,12 +55,13 @@ exports.createOrder = async (req, res) => {
 // Get buyer's orders
 exports.getOrders = async (req, res) => {
   try {
-    // TEMPORARY: Use hardcoded ID for testing
-    const testUserId = '6837ee8c9ab545feec46040f';
-    const orders = await Order.find({ buyerId: testUserId })
-                            .sort({ createdAt: -1 })
-                            .populate('items.productId', 'name image');
-    
+    // Use authenticated user's ID
+    const userId = req.user.id;
+
+    const orders = await Order.find({ buyerId: userId })
+                              .sort({ createdAt: -1 })
+                              .populate('items.productId', 'name image');
+
     console.log('Orders found:', orders); // Add this for debugging
     res.status(200).json(orders);
   } catch (error) {
