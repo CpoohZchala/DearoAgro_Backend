@@ -4,21 +4,20 @@ const {
   getOrders, 
   getOrderById 
 } = require('../controllers/orderController');
-const auth = require('../middleware/authenticate');
+const authenticate = require('../middleware/authenticate');
 
 const router = express.Router();
 
-// Protect all routes with buyer authentication
-router.use(auth);
-router.use((req, res, next) => {
-  if (req.user.userType !== 'Buyer') {
-    return res.status(403).json({ message: 'Access denied. Buyers only.' });
-  }
-  next();
-});
+// Protect all routes with authentication
+router.use(authenticate);
 
-router.post('/', createOrder);           // Create order
-router.get('/', getOrders);              // Get all orders
-router.get('/:id', getOrderById);        // Get order by ID
+// Create a new order from the cart
+router.post('/', createOrder);
+
+// Get all orders for the authenticated buyer
+router.get('/', getOrders);
+
+// Get a specific order by ID
+router.get('/:id', getOrderById);
 
 module.exports = router;
