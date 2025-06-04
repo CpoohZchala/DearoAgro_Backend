@@ -19,7 +19,7 @@ exports.createOrder = async (req, res) => {
     
     // Create order items from cart items
     const orderItems = cart.items.map(item => ({
-      product: item.product._id,
+      productId: item.product._id, // Ensure productId matches the schema
       quantity: item.quantity,
       price: item.price,
       name: item.name
@@ -27,9 +27,9 @@ exports.createOrder = async (req, res) => {
     
     // Create order
     const order = new Order({
-      buyer: req.user.id,
+      buyerId: req.user.id, // Ensure buyerId matches the schema
       items: orderItems,
-      total: cart.total,
+      totalAmount: cart.total, // Ensure totalAmount matches the schema
       shippingAddress,
       paymentMethod
     });
