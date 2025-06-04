@@ -103,9 +103,9 @@ router.post('/signup', async (req, res) => {
         }
 
         // Hash the password
-        console.log('Password before hashing:', password); // Debugging log
+        console.log('Password before hashing:', password);
         const hashedPassword = await bcrypt.hash(password, 10);
-        console.log('Hashed password:', hashedPassword); // Debugging log
+        console.log('Hashed password:', hashedPassword);
         
         // Create new user
         const user = new User({ fullName, mobileNumber, password: hashedPassword, userType });
@@ -160,13 +160,13 @@ router.post('/signin', async (req, res) => {
 
         if (req.body.userType === 'Farmer') {
             const farmer = await Farmer.findOne({ mobileNumber });
-            console.log('Farmer fetched from DB:', farmer); // Debugging log
+            console.log('Farmer fetched from DB:', farmer);
             if (!farmer) {
                 return res.status(400).json({ message: 'Invalid Credentials' });
             }
 
             const isMatch = await bcrypt.compare(password, farmer.password);
-            console.log('Password comparison result for Farmer:', isMatch); // Debugging log
+            console.log('Password comparison result for Farmer:', isMatch);
             if (!isMatch) {
                 return res.status(400).json({ message: 'Invalid Credentials' });
             }
@@ -187,13 +187,13 @@ router.post('/signin', async (req, res) => {
 
         if (req.body.userType === 'Marketing Officer') {
             const marketingOfficer = await MarketingOfficer.findOne({ mobileNumber });
-            console.log('Marketing Officer fetched from DB:', marketingOfficer); // Debugging log
+            console.log('Marketing Officer fetched from DB:', marketingOfficer);
             if (!marketingOfficer) {
                 return res.status(400).json({ message: 'Invalid Credentials' });
             }
 
             const isMatch = await bcrypt.compare(password, marketingOfficer.password);
-            console.log('Password comparison result for Marketing Officer:', isMatch); // Debugging log
+            console.log('Password comparison result for Marketing Officer:', isMatch);
             if (!isMatch) {
                 return res.status(400).json({ message: 'Invalid Credentials' });
             }
@@ -238,13 +238,13 @@ router.post('/signin', async (req, res) => {
         }
 
         const user = await User.findOne({ mobileNumber });
-        console.log('User fetched from DB:', user); // Debugging log
+        console.log('User fetched from DB:', user);
         if (!user) {
             return res.status(400).json({ message: 'Invalid Credentials' });
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
-        console.log('Password comparison result for User:', isMatch); // Debugging log
+        console.log('Password comparison result for User:', isMatch);
         if (!isMatch) {
             return res.status(400).json({ message: 'Invalid Credentials' });
         }
@@ -309,7 +309,7 @@ router.post('/refresh-token', (req, res) => {
     const newToken = jwt.sign(
       { id: decoded.id, userType: decoded.userType },
       process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRE } // Use JWT_EXPIRE from .env
+      { expiresIn: process.env.JWT_EXPIRE } 
     );
     res.status(200).json({ token: newToken });
   } catch (error) {

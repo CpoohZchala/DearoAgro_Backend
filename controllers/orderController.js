@@ -51,13 +51,14 @@ exports.createOrder = async (req, res) => {
   }
 };
 
+
 // Get buyer's orders
 exports.getOrders = async (req, res) => {
   try {
     console.log('Fetching orders for user ID:', req.user.id);
-    const orders = await Order.find({ buyer: req.user.id })
+    const orders = await Order.find({ buyerId: req.user.id })  // Changed from buyer to buyerId
                             .sort({ createdAt: -1 })
-                            .populate('items.product', 'name image');
+                            .populate('items.productId', 'name image');  // Also changed from product to productId
     
     res.status(200).json(orders);
   } catch (error) {
@@ -66,13 +67,14 @@ exports.getOrders = async (req, res) => {
   }
 };
 
+
 // Get order by ID
 exports.getOrderById = async (req, res) => {
   try {
     const order = await Order.findOne({ 
       _id: req.params.id, 
-      buyer: req.user.id 
-    }).populate('items.product', 'name image description');
+      buyerId: req.user.id 
+    }).populate('items.productId', 'name image description');  // Changed from product to productId
     
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
