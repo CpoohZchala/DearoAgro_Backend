@@ -87,8 +87,9 @@ exports.getOrderById = async (req, res) => {
     console.error(error);
     res.status(500).json({ message: 'Error fetching order' });
   }
+};
 
-  // Delete order by ID
+// Delete order by ID
 exports.deleteOrder = async (req, res) => {
   try {
     const order = await Order.findOneAndDelete({ 
@@ -105,5 +106,4 @@ exports.deleteOrder = async (req, res) => {
     console.error(error);
     res.status(500).json({ message: 'Error deleting order' });
   }
-};
 };
