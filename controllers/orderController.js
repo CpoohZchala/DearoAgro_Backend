@@ -44,6 +44,7 @@ exports.createOrder = async (req, res) => {
     
     res.status(201).json(order);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: 'Error creating order' });
   }
 };
@@ -57,6 +58,7 @@ exports.getOrders = async (req, res) => {
     
     res.status(200).json(orders);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: 'Error fetching orders' });
   }
 };
@@ -75,6 +77,7 @@ exports.getOrderById = async (req, res) => {
     
     res.status(200).json(order);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: 'Error fetching order' });
   }
 };
