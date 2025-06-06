@@ -50,10 +50,13 @@ exports.updateProduct = async (req, res) => {
       { name, price, image, category },
       { new: true }
     );
-    if (!updatedProduct) return res.status(404).json({ message: 'Product not found' });
+    if (!updatedProduct) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
     res.status(200).json(updatedProduct);
   } catch (error) {
-    res.status(500).json({ message: 'Error updating product' });
+    console.error('Error updating product:', error); // Log error details
+    res.status(500).json({ message: 'Error updating product', error: error.message });
   }
 };
 
@@ -61,9 +64,12 @@ exports.updateProduct = async (req, res) => {
 exports.deleteProduct = async (req, res) => {
   try {
     const deletedProduct = await Product.findByIdAndDelete(req.params.id);
-    if (!deletedProduct) return res.status(404).json({ message: 'Product not found' });
+    if (!deletedProduct) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
     res.status(200).json({ message: 'Product deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: 'Error deleting product' });
+    console.error('Error deleting product:', error); // Log error details
+    res.status(500).json({ message: 'Error deleting product', error: error.message });
   }
 };
