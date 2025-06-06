@@ -46,6 +46,9 @@ exports.updateProduct = async (req, res) => {
   const { name, price, image, category } = req.body;
   const productId = req.params.id;
 
+  // Log the received ID
+  console.log('Received product ID:', productId);
+
   // Validate ID
   if (!productId) {
     return res.status(400).json({ message: 'Product ID is required' });
