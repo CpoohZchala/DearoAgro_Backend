@@ -24,7 +24,10 @@ const marketingOfficerRoutes = require('./routes/marketingOfficerRoutes');
 connectDB();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: 'https://dearoagro-admin-dashboard.onrender.com', // Replace this with your actual frontend domain
+  credentials: true
+}));
 app.use(express.json());
 
 // Routes

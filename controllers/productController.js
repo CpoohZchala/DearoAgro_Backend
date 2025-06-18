@@ -74,6 +74,9 @@ exports.updateProduct = async (req, res) => {
 exports.deleteProduct = async (req, res) => {
   const productId = req.params.id;
 
+  // Log the received ID
+  console.log('Received product ID for deletion:', productId);
+
   // Validate ID
   if (!productId) {
     return res.status(400).json({ message: 'Product ID is required' });
