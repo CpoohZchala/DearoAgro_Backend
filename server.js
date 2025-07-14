@@ -25,7 +25,10 @@ connectDB();
 
 // Middleware
 app.use(cors({
-  origin: 'https://dearoagro-admin-dashboard.onrender.com', // Replace this with your actual frontend domain
+  origin: [
+    'https://dearoagro-admin-dashboard.onrender.com',
+    'http://localhost:5173'
+  ],
   credentials: true
 }));
 app.use(express.json());
