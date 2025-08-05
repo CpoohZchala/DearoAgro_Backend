@@ -17,6 +17,8 @@ const productRoutes = require('./routes/productRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const marketingOfficerRoutes = require('./routes/marketingOfficerRoutes');
+const stockRoutes = require('./routes/stockRoutes');
+
 
 
 
@@ -50,6 +52,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/officers', marketingOfficerRoutes);
+app.use('/api/stocks', stockRoutes);
 
 
 app.use('/uploads', express.static('uploads')); 
