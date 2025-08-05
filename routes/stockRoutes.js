@@ -23,10 +23,11 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST create new stock
+// POST create new stock for authenticated user
 router.post('/', async (req, res) => {
   try {
     const {
+      memberId, 
       fullName,
       mobileNumber,
       address,
@@ -37,6 +38,8 @@ router.post('/', async (req, res) => {
     } = req.body;
 
     const newStock = new Stock({
+      userId: req.user.id,
+      memberId,
       fullName,
       mobileNumber,
       address,
@@ -49,8 +52,11 @@ router.post('/', async (req, res) => {
     await newStock.save();
     res.status(201).json({ message: 'Stock created successfully' });
   } catch (err) {
-    console.error(err);
-    res.status(400).json({ error: 'Failed to create stock' });
+    console.error('Stock creation error:', err); // More detailed logging
+    res.status(400).json({ 
+      error: 'Failed to create stock',
+      details: err.message // Include error details for debugging
+    });
   }
 });
 
