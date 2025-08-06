@@ -45,9 +45,11 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST create new stock (remove authentication dependency)
+// POST create new stock
 router.post('/', async (req, res) => {
   try {
+    console.log('Received body:', req.body); // Debug log
+    
     const {
       memberId,
       fullName,
@@ -58,6 +60,16 @@ router.post('/', async (req, res) => {
       pricePerKg,
       harvestDate
     } = req.body;
+
+    console.log('Extracted memberId:', memberId); // Debug log
+
+    // Validate required fields
+    if (!memberId) {
+      return res.status(400).json({ 
+        error: 'memberId is required',
+        received: req.body 
+      });
+    }
 
     const newStock = new Stock({
       memberId,
@@ -70,13 +82,16 @@ router.post('/', async (req, res) => {
       harvestDate
     });
 
+    console.log('Stock object before save:', newStock); // Debug log
+
     await newStock.save();
     res.status(201).json({ message: 'Stock created successfully' });
   } catch (err) {
     console.error('Stock creation error:', err);
     res.status(400).json({ 
       error: 'Failed to create stock',
-      details: err.message 
+      details: err.message,
+      received: req.body
     });
   }
 });
