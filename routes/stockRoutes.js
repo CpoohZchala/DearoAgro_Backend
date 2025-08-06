@@ -45,10 +45,10 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST create new stock
+// POST create new stock - Updated to include all fields
 router.post('/', async (req, res) => {
   try {
-    console.log('Received body:', req.body); // Debug log
+    console.log('Received body:', req.body);
     
     const {
       memberId,
@@ -58,10 +58,10 @@ router.post('/', async (req, res) => {
       cropName,
       totalAmount,
       pricePerKg,
-      harvestDate
+      harvestDate,
+      currentPrice,
+      quantity
     } = req.body;
-
-    console.log('Extracted memberId:', memberId); // Debug log
 
     // Validate required fields
     if (!memberId) {
@@ -79,19 +79,21 @@ router.post('/', async (req, res) => {
       cropName,
       totalAmount,
       pricePerKg,
-      harvestDate
+      harvestDate,
+      currentPrice: currentPrice || 0,
+      quantity: quantity || 0
     });
 
-    console.log('Stock object before save:', newStock); // Debug log
-
     await newStock.save();
-    res.status(201).json({ message: 'Stock created successfully' });
+    res.status(201).json({ 
+      message: 'Stock created successfully',
+      data: newStock
+    });
   } catch (err) {
     console.error('Stock creation error:', err);
     res.status(400).json({ 
       error: 'Failed to create stock',
-      details: err.message,
-      received: req.body
+      details: err.message
     });
   }
 });
@@ -100,7 +102,15 @@ router.post('/', async (req, res) => {
 router.put("/update", async (req, res) => {
   try {
     const { id, ...updateData } = req.body;
-    const updatedStock = await Stock.findByIdAndUpdate(id, updateData, { new: true });
+    
+    if (!id) {
+      return res.status(400).json({ error: "Stock ID is required" });
+    }
+
+    const updatedStock = await Stock.findByIdAndUpdate(id, updateData, { 
+      new: true,
+      runValidators: true
+    });
     
     if (!updatedStock) {
       return res.status(404).json({ error: "Stock not found" });
@@ -112,7 +122,10 @@ router.put("/update", async (req, res) => {
     });
   } catch (error) {
     console.error('Stock update error:', error);
-    res.status(500).json({ error: "Failed to update stock" });
+    res.status(500).json({ 
+      error: "Failed to update stock",
+      details: error.message
+    });
   }
 });
 
@@ -125,10 +138,16 @@ router.delete('/delete/:id', async (req, res) => {
       return res.status(404).json({ error: "Stock not found" });
     }
     
-    res.status(200).json({ message: "Stock deleted successfully" });
+    res.status(200).json({ 
+      message: "Stock deleted successfully",
+      deletedStock: result
+    });
   } catch (err) {
     console.error('Stock deletion error:', err);
-    res.status(500).json({ error: 'Failed to delete stock' });
+    res.status(500).json({ 
+      error: 'Failed to delete stock',
+      details: err.message
+    });
   }
 });
 
