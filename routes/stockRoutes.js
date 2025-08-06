@@ -12,6 +12,28 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Fetch stocks by user ID (following your cultivation pattern)
+router.get("/fetch/:id", async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    if (!userId) {
+      return res.status(400).json({ error: "User ID is required" });
+    }
+
+    const stocks = await Stock.find({ memberId: userId }).sort({ createdAt: -1 });
+
+    if (!stocks || stocks.length === 0) {
+      return res.status(404).json({ error: "No stocks found for this user" });
+    }
+
+    res.status(200).json(stocks);
+  } catch (error) {
+    console.error('Error fetching stocks by user ID:', error);
+    res.status(500).json({ error: "Failed to fetch stocks" });
+  }
+});
+
 // GET stock by ID
 router.get('/:id', async (req, res) => {
   try {
@@ -23,11 +45,11 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST create new stock for authenticated user
+// POST create new stock (remove authentication dependency)
 router.post('/', async (req, res) => {
   try {
     const {
-      memberId, 
+      memberId,
       fullName,
       mobileNumber,
       address,
@@ -38,7 +60,6 @@ router.post('/', async (req, res) => {
     } = req.body;
 
     const newStock = new Stock({
-      userId: req.user.id,
       memberId,
       fullName,
       mobileNumber,
@@ -52,38 +73,46 @@ router.post('/', async (req, res) => {
     await newStock.save();
     res.status(201).json({ message: 'Stock created successfully' });
   } catch (err) {
-    console.error('Stock creation error:', err); // More detailed logging
+    console.error('Stock creation error:', err);
     res.status(400).json({ 
       error: 'Failed to create stock',
-      details: err.message // Include error details for debugging
+      details: err.message 
     });
   }
 });
 
-// PUT update stock by ID
-router.put('/:id', async (req, res) => {
+// Update stock
+router.put("/update", async (req, res) => {
   try {
-    const updatedStock = await Stock.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true
+    const { id, ...updateData } = req.body;
+    const updatedStock = await Stock.findByIdAndUpdate(id, updateData, { new: true });
+    
+    if (!updatedStock) {
+      return res.status(404).json({ error: "Stock not found" });
+    }
+    
+    res.status(200).json({ 
+      message: "Stock updated successfully",
+      data: updatedStock
     });
-
-    if (!updatedStock) return res.status(404).json({ error: 'Stock not found' });
-
-    res.json({ message: 'Stock updated successfully', stock: updatedStock });
-  } catch (err) {
-    res.status(400).json({ error: 'Failed to update stock' });
+  } catch (error) {
+    console.error('Stock update error:', error);
+    res.status(500).json({ error: "Failed to update stock" });
   }
 });
 
 // DELETE stock by ID
-router.delete('/:id', async (req, res) => {
+router.delete('/delete/:id', async (req, res) => {
   try {
-    const deletedStock = await Stock.findByIdAndDelete(req.params.id);
-    if (!deletedStock) return res.status(404).json({ error: 'Stock not found' });
-
-    res.json({ message: 'Stock deleted successfully' });
+    const result = await Stock.findByIdAndDelete(req.params.id);
+    
+    if (!result) {
+      return res.status(404).json({ error: "Stock not found" });
+    }
+    
+    res.status(200).json({ message: "Stock deleted successfully" });
   } catch (err) {
+    console.error('Stock deletion error:', err);
     res.status(500).json({ error: 'Failed to delete stock' });
   }
 });
