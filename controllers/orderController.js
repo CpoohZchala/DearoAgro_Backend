@@ -55,12 +55,22 @@ exports.createOrder = async (req, res) => {
 // Get buyer's orders
 exports.getOrders = async (req, res) => {
   try {
-    // Use authenticated user's ID
     const userId = req.user.id;
+    const userType = req.user.userType; // Make sure userType is set in your auth middleware
 
-    const orders = await Order.find({ buyerId: userId })
-                              .sort({ createdAt: -1 })
-                              .populate('items.productId', 'name image');
+    let orders;
+
+    if (userType === 'Super Admin') {
+      // Super Admin sees all orders
+      orders = await Order.find()
+        .sort({ createdAt: -1 })
+        .populate('items.productId', 'name image');
+    } else {
+      // Buyer sees only their own orders
+      orders = await Order.find({ buyerId: userId })
+        .sort({ createdAt: -1 })
+        .populate('items.productId', 'name image');
+    }
 
     res.status(200).json(orders);
   } catch (error) {
@@ -68,6 +78,7 @@ exports.getOrders = async (req, res) => {
     res.status(500).json({ message: 'Error fetching orders' });
   }
 };
+
 
 
 // Get order by ID
