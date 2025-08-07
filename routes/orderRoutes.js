@@ -1,5 +1,5 @@
 const express = require('express');
-const { createOrder, getOrders, getOrderById ,deleteOrder} = require('../controllers/orderController');
+const { createOrder, getOrders, getOrderById ,deleteOrder,updateOrderStatus} = require('../controllers/orderController');
 const authenticate = require('../middleware/authenticate');
 
 const router = express.Router();
@@ -18,5 +18,8 @@ router.get('/:id', getOrderById);
 
 //Delete Order
 router.delete('/:id',deleteOrder);
+
+// PUT /api/orders/status/:orderId
+router.put('/status/:orderId', updateOrderStatus);
 
 module.exports = router;
