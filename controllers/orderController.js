@@ -64,12 +64,15 @@ exports.getOrders = async (req, res) => {
       // Super Admin sees all orders
       orders = await Order.find()
         .sort({ createdAt: -1 })
-        .populate('items.productId', 'fullName');
+        .populate('items.productId', 'name image')
+        .populate('buyerId', 'fullName');
+        
     } else {
       // Buyer sees only their own orders
       orders = await Order.find({ buyerId: userId })
         .sort({ createdAt: -1 })
-        .populate('items.productId', 'name image');
+        .populate('items.productId', 'name image')
+        .populate('buyerId', 'fullName');
     }
 
     res.status(200).json(orders);
