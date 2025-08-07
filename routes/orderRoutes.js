@@ -20,6 +20,6 @@ router.get('/:id', getOrderById);
 router.delete('/:id',deleteOrder);
 
 // PUT /api/orders/status/:orderId
-router.put('/status/:orderId', updateOrderStatus);
+router.put('/status/:orderId',  orderController.updateOrderStatus);
 
 module.exports = router;
