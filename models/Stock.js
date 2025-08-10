@@ -11,6 +11,10 @@ const stockSchema = new mongoose.Schema({
   harvestDate: { type: Date, required: true },
   currentPrice: { type: Number, default: 0 },
   quantity: { type: Number, default: 0 },
+  isProductListed: {
+    type: Boolean,
+    default: false
+  },
   createdAt: { type: Date, default: Date.now }
 }, {
   timestamps: true 
