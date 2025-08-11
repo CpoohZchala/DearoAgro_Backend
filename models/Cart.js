@@ -7,10 +7,16 @@ const CartItemSchema = new mongoose.Schema({
     required: true 
   },
   quantity: { 
-    type: Number, 
+    type: mongoose.Schema.Types.Decimal128, 
     required: true, 
-    default: 1,
-    min: [0.01, 'Quantity must be greater than 0']
+    default: 1.0,
+    min: [0.1, 'Quantity cannot be less than 0.1'],
+    validate: {
+      validator: function(v) {
+        return v >= 0.1;
+      },
+      message: 'Quantity must be at least 0.1'
+    }
   },
   price: {
     type: Number,
@@ -49,7 +55,13 @@ const CartSchema = new mongoose.Schema({
 
 // Calculate total before saving
 CartSchema.pre('save', function(next) {
-  this.total = this.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  this.total = this.items.reduce((sum, item) => {
+    // Convert Decimal128 to number for calculation
+    const quantity = item.quantity instanceof mongoose.Types.Decimal128 
+      ? parseFloat(item.quantity.toString()) 
+      : item.quantity;
+    return sum + (item.price * quantity);
+  }, 0);
   this.updatedAt = Date.now();
   next();
 });
