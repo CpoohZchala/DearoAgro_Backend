@@ -151,4 +151,30 @@ router.delete('/delete/:id', async (req, res) => {
   }
 });
 
+// Toggle product listing
+router.put('/toggle/:id', async (req, res) => {
+  try {
+    const { isProductListed } = req.body;
+
+    const updatedStock = await Stock.findByIdAndUpdate(
+      req.params.id,
+      { isProductListed },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedStock) {
+      return res.status(404).json({ error: "Stock not found" });
+    }
+
+    res.status(200).json({
+      message: "Product listing status updated",
+      data: updatedStock
+    });
+  } catch (error) {
+    console.error("Error updating product status:", error);
+    res.status(500).json({ error: "Failed to update product status" });
+  }
+});
+
+
 module.exports = router;
