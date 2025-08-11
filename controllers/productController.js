@@ -43,7 +43,8 @@ exports.addProduct = async (req, res) => {
 
 // Update a product by ID
 exports.updateProduct = async (req, res) => {
-  const { name, price, image, category } = req.body;
+  const { name, price, image, category, quantity } = req.body;
+
   const productId = req.params.id;
 
   // Log the received ID
@@ -57,9 +58,10 @@ exports.updateProduct = async (req, res) => {
   try {
     const updatedProduct = await Product.findByIdAndUpdate(
       productId,
-      { name, price, image, category },
+      { name, price, image, category, quantity },
       { new: true }
     );
+
     if (!updatedProduct) {
       return res.status(404).json({ message: "Product not found" });
     }
