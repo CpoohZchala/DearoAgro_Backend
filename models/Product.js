@@ -7,6 +7,7 @@ const productSchema = new mongoose.Schema({
     image: { type: String, required: true },
     category: { type: String, required: true },
     quantity: { type: Number, default: 0 },
+    harvestId: { type: mongoose.Schema.Types.ObjectId, ref: 'Harvest', required: true }
 });
 
 // Create the Product model
