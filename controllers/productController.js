@@ -24,16 +24,6 @@ exports.getProductById = async (req, res) => {
 // Add a new product
 exports.addProduct = async (req, res) => {
   try {
-    const { name, price, image, category, quantity } = req.body;
-
-    // Validate input (add quantity validation)
-    if (!name || !price || !image || !category || quantity === undefined) {
-      return res.status(400).json({ message: "All fields are required" });
-    }
-
-// Add a new product
-exports.addProduct = async (req, res) => {
-  try {
     const { name, price, image, category, quantity, harvestId } = req.body;
 
     // Validate input (including harvestId)
@@ -80,15 +70,10 @@ exports.updateProduct = async (req, res) => {
   }
 };
 
-
 // Delete a product by ID
 exports.deleteProduct = async (req, res) => {
   const productId = req.params.id;
 
-  // Log the received ID
-  console.log("Received product ID for deletion:", productId);
-
-  // Validate ID
   if (!productId) {
     return res.status(400).json({ message: "Product ID is required" });
   }
@@ -101,9 +86,7 @@ exports.deleteProduct = async (req, res) => {
     res.status(200).json({ message: "Product deleted successfully" });
   } catch (error) {
     console.error("Error deleting product:", error);
-    res
-      .status(500)
-      .json({ message: "Error deleting product", error: error.message });
+    res.status(500).json({ message: "Error deleting product", error: error.message });
   }
 };
 
@@ -120,5 +103,3 @@ exports.deleteByHarvestId = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
-
-
