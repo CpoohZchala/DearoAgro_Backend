@@ -31,8 +31,18 @@ exports.addProduct = async (req, res) => {
       return res.status(400).json({ message: "All fields are required" });
     }
 
+// Add a new product
+exports.addProduct = async (req, res) => {
+  try {
+    const { name, price, image, category, quantity, harvestId } = req.body;
+
+    // Validate input (including harvestId)
+    if (!name || !price || !image || !category || quantity === undefined || !harvestId) {
+      return res.status(400).json({ message: "All fields including harvestId are required" });
+    }
+
     // Create a new product
-    const product = new Product({ name, price, image, category, quantity });
+    const product = new Product({ name, price, image, category, quantity, harvestId });
     await product.save();
 
     res.status(201).json(product);
@@ -43,22 +53,20 @@ exports.addProduct = async (req, res) => {
 
 // Update a product by ID
 exports.updateProduct = async (req, res) => {
-  const { name, price, image, category, quantity } = req.body;
-
+  const { name, price, image, category, quantity, harvestId } = req.body;
   const productId = req.params.id;
 
-  // Log the received ID
-  console.log("Received product ID:", productId);
-
-  // Validate ID
   if (!productId) {
     return res.status(400).json({ message: "Product ID is required" });
+  }
+  if (!harvestId) {
+    return res.status(400).json({ message: "Harvest ID is required" });
   }
 
   try {
     const updatedProduct = await Product.findByIdAndUpdate(
       productId,
-      { name, price, image, category, quantity },
+      { name, price, image, category, quantity, harvestId },
       { new: true }
     );
 
@@ -68,11 +76,10 @@ exports.updateProduct = async (req, res) => {
     res.status(200).json(updatedProduct);
   } catch (error) {
     console.error("Error updating product:", error);
-    res
-      .status(500)
-      .json({ message: "Error updating product", error: error.message });
+    res.status(500).json({ message: "Error updating product", error: error.message });
   }
 };
+
 
 // Delete a product by ID
 exports.deleteProduct = async (req, res) => {
