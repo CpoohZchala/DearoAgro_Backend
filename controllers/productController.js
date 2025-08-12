@@ -101,7 +101,7 @@ exports.deleteProduct = async (req, res) => {
 };
 
 // DELETE product by harvestId
-router.delete('/by-harvest/:harvestId', async (req, res) => {
+exports.deleteByHarvestId = async (req, res) => {
   try {
     const product = await Product.findOneAndDelete({ harvestId: req.params.harvestId });
     if (!product) {
@@ -112,5 +112,6 @@ router.delete('/by-harvest/:harvestId', async (req, res) => {
     console.error('Error deleting product by harvestId:', err);
     res.status(500).json({ success: false, message: 'Server error' });
   }
-});
+};
+
 

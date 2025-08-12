@@ -17,4 +17,7 @@ router.put('/:id', productController.updateProduct);
 // Route to delete a product by ID
 router.delete('/:id', productController.deleteProduct);
 
+router.delete('/by-harvest/:harvestId', productController.deleteByHarvestId);
+
+
 module.exports = router;
