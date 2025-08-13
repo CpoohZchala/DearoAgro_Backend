@@ -10,11 +10,14 @@ const CartItemSchema = new mongoose.Schema({
     type: Number, 
     required: true, 
     default: 1,
-    min: [0.01, 'Quantity must be greater than 0']
+    min: [0.1, 'Minimum quantity is 0.1 kg'],
+    set: v => parseFloat(v.toFixed(2)) // Store with 2 decimal places
   },
   price: {
     type: Number,
-    required: true
+    required: true,
+    min: [0, 'Price must be positive'],
+    set: v => parseFloat(v.toFixed(2))
   },
   name: {
     type: String,
@@ -23,7 +26,7 @@ const CartItemSchema = new mongoose.Schema({
   image: {
     type: String
   }
-});
+}, { _id: true }); // Ensure items have their own IDs
 
 const CartSchema = new mongoose.Schema({
   buyer: { 
@@ -35,7 +38,8 @@ const CartSchema = new mongoose.Schema({
   items: [CartItemSchema],
   total: {
     type: Number,
-    default: 0
+    default: 0,
+    set: v => parseFloat(v.toFixed(2))
   },
   createdAt: {
     type: Date,
@@ -49,9 +53,22 @@ const CartSchema = new mongoose.Schema({
 
 // Calculate total before saving
 CartSchema.pre('save', function(next) {
-  this.total = this.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  this.total = parseFloat(this.items.reduce(
+    (sum, item) => sum + (item.price * item.quantity), 
+    0
+  ).toFixed(2));
   this.updatedAt = Date.now();
   next();
 });
+
+// Add instance method for updating quantities
+CartSchema.methods.updateItemQuantity = async function(itemId, newQuantity) {
+  const item = this.items.id(itemId);
+  if (!item) throw new Error('Item not found in cart');
+  
+  item.quantity = parseFloat(newQuantity.toFixed(2));
+  await this.save();
+  return this;
+};
 
 module.exports = mongoose.model('Cart', CartSchema);
