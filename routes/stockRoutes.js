@@ -45,7 +45,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST create new stock - Updated to include all fields
+// POST create new stock - Updated to include currentAmount
 router.post('/', async (req, res) => {
   try {
     console.log('Received body:', req.body);
@@ -57,6 +57,7 @@ router.post('/', async (req, res) => {
       address,
       cropName,
       totalAmount,
+      currentAmount,
       pricePerKg,
       harvestDate,
       currentPrice,
@@ -78,6 +79,7 @@ router.post('/', async (req, res) => {
       address,
       cropName,
       totalAmount,
+      currentAmount: currentAmount || totalAmount, // Set to totalAmount if not provided
       pricePerKg,
       harvestDate,
       currentPrice: currentPrice || 0,
@@ -94,6 +96,47 @@ router.post('/', async (req, res) => {
     res.status(400).json({ 
       error: 'Failed to create stock',
       details: err.message
+    });
+  }
+});
+
+// Update stock current amount after order
+router.put("/update-current-amount/:id", async (req, res) => {
+  try {
+    const stockId = req.params.id;
+    const { orderAmount } = req.body;
+    
+    if (!orderAmount || orderAmount <= 0) {
+      return res.status(400).json({ error: "Valid order amount is required" });
+    }
+
+    const stock = await Stock.findById(stockId);
+    
+    if (!stock) {
+      return res.status(404).json({ error: "Stock not found" });
+    }
+
+    // Check if enough stock is available
+    if (stock.currentAmount < orderAmount) {
+      return res.status(400).json({ 
+        error: "Insufficient stock available",
+        available: stock.currentAmount,
+        requested: orderAmount
+      });
+    }
+
+    // Update current amount using the model method
+    await stock.updateCurrentAmount(orderAmount);
+    
+    res.status(200).json({ 
+      message: "Stock amount updated successfully",
+      data: stock
+    });
+  } catch (error) {
+    console.error('Stock amount update error:', error);
+    res.status(500).json({ 
+      error: "Failed to update stock amount",
+      details: error.message
     });
   }
 });
@@ -175,6 +218,5 @@ router.put('/toggle/:id', async (req, res) => {
     res.status(500).json({ error: "Failed to update product status" });
   }
 });
-
 
 module.exports = router;
