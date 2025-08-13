@@ -2,6 +2,52 @@ const express = require('express');
 const router = express.Router();
 const Stock = require('../models/Stock');
 
+console.log('Stock routes loaded'); // Add this debug line
+
+// Update stock current amount after order - Place this FIRST
+router.put("/update-current-amount/:id", async (req, res) => {
+  console.log('Update current amount route hit'); // Add debug line
+  try {
+    const stockId = req.params.id;
+    const { orderAmount } = req.body;
+    
+    console.log('Stock ID:', stockId, 'Order Amount:', orderAmount); // Debug
+    
+    if (!orderAmount || orderAmount <= 0) {
+      return res.status(400).json({ error: "Valid order amount is required" });
+    }
+
+    const stock = await Stock.findById(stockId);
+    
+    if (!stock) {
+      return res.status(404).json({ error: "Stock not found" });
+    }
+
+    // Check if enough stock is available
+    if (stock.currentAmount < orderAmount) {
+      return res.status(400).json({ 
+        error: "Insufficient stock available",
+        available: stock.currentAmount,
+        requested: orderAmount
+      });
+    }
+
+    // Update current amount using the model method
+    const updatedStock = await stock.updateCurrentAmount(orderAmount);
+    
+    res.status(200).json({ 
+      message: "Stock amount updated successfully",
+      data: updatedStock
+    });
+  } catch (error) {
+    console.error('Stock amount update error:', error);
+    res.status(500).json({ 
+      error: "Failed to update stock amount",
+      details: error.message
+    });
+  }
+});
+
 // GET all stocks
 router.get('/', async (req, res) => {
   try {
@@ -96,47 +142,6 @@ router.post('/', async (req, res) => {
     res.status(400).json({ 
       error: 'Failed to create stock',
       details: err.message
-    });
-  }
-});
-
-// Update stock current amount after order
-router.put("/update-current-amount/:id", async (req, res) => {
-  try {
-    const stockId = req.params.id;
-    const { orderAmount } = req.body;
-    
-    if (!orderAmount || orderAmount <= 0) {
-      return res.status(400).json({ error: "Valid order amount is required" });
-    }
-
-    const stock = await Stock.findById(stockId);
-    
-    if (!stock) {
-      return res.status(404).json({ error: "Stock not found" });
-    }
-
-    // Check if enough stock is available
-    if (stock.currentAmount < orderAmount) {
-      return res.status(400).json({ 
-        error: "Insufficient stock available",
-        available: stock.currentAmount,
-        requested: orderAmount
-      });
-    }
-
-    // Update current amount using the model method
-    await stock.updateCurrentAmount(orderAmount);
-    
-    res.status(200).json({ 
-      message: "Stock amount updated successfully",
-      data: stock
-    });
-  } catch (error) {
-    console.error('Stock amount update error:', error);
-    res.status(500).json({ 
-      error: "Failed to update stock amount",
-      details: error.message
     });
   }
 });
