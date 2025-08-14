@@ -43,14 +43,12 @@ exports.addProduct = async (req, res) => {
 
 // Update a product by ID
 exports.updateProduct = async (req, res) => {
-const { name, price, image, category, quantity, harvestId, stockId } = req.body;  const productId = req.params.id;
+  const { name, price, image, category, quantity, harvestId } = req.body;
+  const productId = req.params.id;
 
   if (!productId) {
     return res.status(400).json({ message: "Product ID is required" });
   }
-  if (!stockId) {
-  return res.status(400).json({ message: "Stock ID is required" });
-}
   if (!harvestId) {
     return res.status(400).json({ message: "Harvest ID is required" });
   }
