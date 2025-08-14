@@ -4,7 +4,6 @@ const Cart = require('../models/Cart');
 const Stock = require('../models/Stock'); 
 
 // Create order from cart
-// Create order from cart
 exports.createOrder = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();

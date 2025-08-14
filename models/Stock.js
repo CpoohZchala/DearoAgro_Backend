@@ -29,7 +29,7 @@ stockSchema.methods.updateCurrentAmount = function(orderAmount) {
 
 // Pre-save middleware to set initial currentAmount
 stockSchema.pre('save', function(next) {
-  if (this.isNew && this.currentAmount === 0) {
+  if (this.isNew) {
     this.currentAmount = this.totalAmount;
   }
   next();
