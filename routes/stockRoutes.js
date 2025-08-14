@@ -224,4 +224,45 @@ router.put('/toggle/:id', async (req, res) => {
   }
 });
 
+// stockRoutes.js
+// Add this new route
+router.get('/dashboard/summary', async (req, res) => {
+  try {
+    // Get total stock and available stock by crop
+    const stockSummary = await Stock.aggregate([
+      {
+        $group: {
+          _id: "$cropName",
+          totalStock: { $sum: "$totalAmount" },
+          availableStock: { $sum: "$currentAmount" },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    // Get low stock items (less than 20% remaining)
+    const lowStockItems = await Stock.find({
+      $expr: {
+        $lt: [
+          { $divide: ["$currentAmount", "$totalAmount"] },
+          0.2 // 20% threshold
+        ]
+      }
+    }).limit(5);
+
+    res.status(200).json({
+      stockSummary,
+      lowStockItems,
+      lastUpdated: new Date()
+    });
+  } catch (error) {
+    console.error('Dashboard stock summary error:', error);
+    res.status(500).json({ 
+      error: "Failed to fetch stock summary",
+      details: error.message
+    });
+  }
+});
+
 module.exports = router;

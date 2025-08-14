@@ -4,6 +4,9 @@ const Cart = require('../models/Cart');
 
 // Create order from cart
 exports.createOrder = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  
   try {
     const { shippingAddress, paymentMethod } = req.body;
     
@@ -13,18 +16,41 @@ exports.createOrder = async (req, res) => {
     }
     
     // Get cart
-    const cart = await Cart.findOne({ buyer: req.user.id }).populate('items.product');
+    const cart = await Cart.findOne({ buyer: req.user.id })
+      .populate('items.product')
+      .session(session);
+      
     if (!cart || cart.items.length === 0) {
       return res.status(400).json({ message: 'Cart is empty' });
     }
     
-    // Create order items from cart items
-    const orderItems = cart.items.map(item => ({
-      productId: item.product._id,
-      quantity: item.quantity,
-      price: item.price,
-      name: item.name
-    }));
+    // Validate stock availability and prepare order items
+    const orderItems = [];
+    const stockUpdates = [];
+    
+    for (const item of cart.items) {
+      const stock = await Stock.findById(item.product.stockId).session(session);
+      if (!stock) {
+        throw new Error(`Stock not found for product ${item.product.name}`);
+      }
+      
+      if (stock.currentAmount < item.quantity) {
+        throw new Error(`Insufficient stock for ${item.product.name}. Available: ${stock.currentAmount}, Requested: ${item.quantity}`);
+      }
+      
+      orderItems.push({
+        productId: item.product._id,
+        stockId: item.product.stockId, // Add stockId to order items
+        quantity: item.quantity,
+        price: item.price,
+        name: item.product.name
+      });
+      
+      stockUpdates.push({
+        stockId: stock._id,
+        quantity: item.quantity
+      });
+    }
     
     // Create order
     const order = new Order({
@@ -32,22 +58,52 @@ exports.createOrder = async (req, res) => {
       items: orderItems,
       totalAmount: cart.total,
       shippingAddress,
-      paymentMethod
+      paymentMethod,
+      status: 'pending'
     });
     
-    await order.save();
-    console.log('Order created:', order);
+    await order.save({ session });
+    
+    // Update stock amounts
+    for (const update of stockUpdates) {
+      await Stock.findByIdAndUpdate(
+        update.stockId,
+        { $inc: { currentAmount: -update.quantity } },
+        { session }
+      );
+    }
     
     // Clear cart
     await Cart.findOneAndUpdate(
       { buyer: req.user.id },
-      { $set: { items: [], total: 0 } }
+      { $set: { items: [], total: 0 } },
+      { session }
     );
     
-    res.status(201).json(order);
+    await session.commitTransaction();
+    
+    // Fetch updated stock data for response
+    const updatedStocks = await Stock.find({
+      _id: { $in: stockUpdates.map(u => u.stockId) }
+    });
+    
+    res.status(201).json({
+      order,
+      updatedStocks: updatedStocks.map(s => ({
+        stockId: s._id,
+        currentAmount: s.currentAmount,
+        totalAmount: s.totalAmount
+      }))
+    });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error creating order' });
+    await session.abortTransaction();
+    console.error('Order creation error:', error);
+    res.status(500).json({ 
+      message: error.message || 'Error creating order',
+      error: error.toString() 
+    });
+  } finally {
+    session.endSession();
   }
 };
 
