@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Order = require('../models/Order');
 const Cart = require('../models/Cart');
+const Stock = require('../models/Stock'); 
 
 // Create order from cart
 exports.createOrder = async (req, res) => {
@@ -40,7 +41,7 @@ exports.createOrder = async (req, res) => {
       
       orderItems.push({
         productId: item.product._id,
-        stockId: item.product.stockId, // Add stockId to order items
+        stockId: item.product.stockId,
         quantity: item.quantity,
         price: item.price,
         name: item.product.name
