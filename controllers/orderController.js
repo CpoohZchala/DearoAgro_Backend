@@ -58,7 +58,7 @@ exports.createOrder = async (req, res) => {
         }
         
         // Convert quantities to numbers to ensure proper comparison
-        const availableStock = Number(stock.currentAmount);
+        const availableStock = Number(stock.currentAmount || stock.totalAmount);
         const requestedQuantity = Number(item.quantity);
         
         if (availableStock < requestedQuantity) {
@@ -328,3 +328,4 @@ exports.updateOrderStatus = async (req, res) => {
     });
   }
 };
+
