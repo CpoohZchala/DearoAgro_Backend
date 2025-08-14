@@ -13,15 +13,20 @@ exports.createOrder = async (req, res) => {
     
     // Validate input
     if (!shippingAddress || !paymentMethod) {
+      await session.abortTransaction();
       return res.status(400).json({ message: 'Shipping address and payment method are required' });
     }
     
-    // Get cart
+    // Get cart with populated products
     const cart = await Cart.findOne({ buyer: req.user.id })
-      .populate('items.product')
+      .populate({
+        path: 'items.product',
+        select: 'name price harvestId'
+      })
       .session(session);
       
     if (!cart || cart.items.length === 0) {
+      await session.abortTransaction();
       return res.status(400).json({ message: 'Cart is empty' });
     }
     
@@ -30,25 +35,39 @@ exports.createOrder = async (req, res) => {
     const stockUpdates = [];
     
     for (const item of cart.items) {
-      const stock = await Stock.findById(item.product.stockId).session(session);
+      if (!item.product.harvestId) {
+        await session.abortTransaction();
+        return res.status(400).json({ 
+          message: `Product ${item.product.name} is not properly linked to stock`
+        });
+      }
+
+      const stock = await Stock.findById(item.product.harvestId).session(session);
       if (!stock) {
-        throw new Error(`Stock not found for product ${item.product.name}`);
+        await session.abortTransaction();
+        return res.status(404).json({ 
+          message: `Stock not found for product ${item.product.name}` 
+        });
       }
       
       if (stock.currentAmount < item.quantity) {
-        throw new Error(`Insufficient stock for ${item.product.name}. Available: ${stock.currentAmount}, Requested: ${item.quantity}`);
+        await session.abortTransaction();
+        return res.status(400).json({ 
+          message: `Insufficient stock for ${item.product.name}. Available: ${stock.currentAmount}, Requested: ${item.quantity}`,
+          availableQuantity: stock.currentAmount
+        });
       }
       
       orderItems.push({
         productId: item.product._id,
-        stockId: item.product.stockId,
+        harvestId: item.product.harvestId,
         quantity: item.quantity,
         price: item.price,
         name: item.product.name
       });
       
       stockUpdates.push({
-        stockId: stock._id,
+        harvestId: stock._id,
         quantity: item.quantity
       });
     }
@@ -68,9 +87,9 @@ exports.createOrder = async (req, res) => {
     // Update stock amounts
     for (const update of stockUpdates) {
       await Stock.findByIdAndUpdate(
-        update.stockId,
+        update.harvestId,
         { $inc: { currentAmount: -update.quantity } },
-        { session }
+        { session, new: true }
       );
     }
     
@@ -85,13 +104,16 @@ exports.createOrder = async (req, res) => {
     
     // Fetch updated stock data for response
     const updatedStocks = await Stock.find({
-      _id: { $in: stockUpdates.map(u => u.stockId) }
-    });
+      _id: { $in: stockUpdates.map(u => u.harvestId) }
+    }).lean();
     
     res.status(201).json({
+      success: true,
+      message: 'Order created successfully',
       order,
       updatedStocks: updatedStocks.map(s => ({
-        stockId: s._id,
+        harvestId: s._id,
+        cropName: s.cropName,
         currentAmount: s.currentAmount,
         totalAmount: s.totalAmount
       }))
@@ -100,6 +122,7 @@ exports.createOrder = async (req, res) => {
     await session.abortTransaction();
     console.error('Order creation error:', error);
     res.status(500).json({ 
+      success: false,
       message: error.message || 'Error creating order',
       error: error.toString() 
     });
@@ -108,38 +131,50 @@ exports.createOrder = async (req, res) => {
   }
 };
 
-
 // Get buyer's orders
 exports.getOrders = async (req, res) => {
   try {
     const userId = req.user.id;
-    const userType = req.user.userType; // Make sure userType is set in your auth middleware
+    const userType = req.user.userType;
 
-    let orders;
+    let query = {};
+    let populateOptions = {
+      path: 'items.productId',
+      select: 'name image price'
+    };
 
-    if (userType === 'Super Admin') {
-      // Super Admin sees all orders
-      orders = await Order.find()
-        .sort({ createdAt: -1 })
-        .populate('items.productId', 'name image');
-        
-        
-    } else {
-      // Buyer sees only their own orders
-      orders = await Order.find({ buyerId: userId })
-        .sort({ createdAt: -1 })
-        .populate('items.productId', 'name image');
-        
+    if (userType !== 'Super Admin') {
+      query.buyerId = userId;
     }
 
-    res.status(200).json(orders);
+    const orders = await Order.find(query)
+      .sort({ createdAt: -1 })
+      .populate(populateOptions)
+      .lean();
+
+    // Format response data
+    const formattedOrders = orders.map(order => ({
+      ...order,
+      items: order.items.map(item => ({
+        ...item,
+        totalPrice: (item.quantity * item.price).toFixed(2)
+      }))
+    }));
+
+    res.status(200).json({
+      success: true,
+      count: formattedOrders.length,
+      orders: formattedOrders
+    });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error fetching orders' });
+    console.error('Error fetching orders:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error fetching orders',
+      error: error.message 
+    });
   }
 };
-
-
 
 // Get order by ID
 exports.getOrderById = async (req, res) => {
@@ -147,35 +182,88 @@ exports.getOrderById = async (req, res) => {
     const order = await Order.findOne({ 
       _id: req.params.id, 
       buyerId: req.user.id 
-    }).populate('items.productId', 'name image description');  // Changed from product to productId
-    
+    })
+    .populate({
+      path: 'items.productId',
+      select: 'name image description price'
+    })
+    .lean();
+
     if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
+      return res.status(404).json({ 
+        success: false,
+        message: 'Order not found' 
+      });
     }
     
-    res.status(200).json(order);
+    // Calculate item totals and order summary
+    const itemsWithTotals = order.items.map(item => ({
+      ...item,
+      itemTotal: (item.quantity * item.price).toFixed(2)
+    }));
+
+    const orderSummary = {
+      ...order,
+      items: itemsWithTotals,
+      subtotal: order.totalAmount.toFixed(2)
+    };
+
+    res.status(200).json({
+      success: true,
+      order: orderSummary
+    });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error fetching order' });
+    console.error('Error fetching order:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error fetching order',
+      error: error.message 
+    });
   }
 };
 
 // Delete order by ID
 exports.deleteOrder = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     const order = await Order.findOneAndDelete({ 
       _id: req.params.id, 
       buyerId: req.user.id 
-    });
+    }).session(session);
 
     if (!order) {
-      return res.status(404).json({ message: 'Order not found or not authorized to delete' });
+      await session.abortTransaction();
+      return res.status(404).json({ 
+        success: false,
+        message: 'Order not found or not authorized to delete' 
+      });
     }
 
-    res.status(200).json({ message: 'Order deleted successfully' });
+    // If you need to restore stock quantities, you would do it here
+    // await Stock.updateMany(
+    //   { _id: { $in: order.items.map(item => item.harvestId) } },
+    //   { $inc: { currentAmount: item.quantity } },
+    //   { session }
+    // );
+
+    await session.commitTransaction();
+    res.status(200).json({ 
+      success: true,
+      message: 'Order deleted successfully',
+      deletedOrderId: order._id 
+    });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error deleting order' });
+    await session.abortTransaction();
+    console.error('Error deleting order:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error deleting order',
+      error: error.message 
+    });
+  } finally {
+    session.endSession();
   }
 };
 
@@ -183,21 +271,39 @@ exports.deleteOrder = async (req, res) => {
 exports.updateOrderStatus = async (req, res) => {
   try {
     const { orderId } = req.params;
+    const { status } = req.body;
 
-    const updatedOrder = await Order.findByIdAndUpdate(
-      orderId,
-      { status: 'complete' },
-      { new: true }
-    );
-
-    if (!updatedOrder) {
-      return res.status(404).json({ message: 'Order not found' });
+    if (!['pending', 'processing', 'shipped', 'delivered', 'cancelled'].includes(status)) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Invalid status value' 
+      });
     }
 
-    res.json(updatedOrder);
+    const updatedOrder = await Order.findOneAndUpdate(
+      { _id: orderId, buyerId: req.user.id },
+      { status },
+      { new: true, runValidators: true }
+    ).populate('items.productId', 'name');
+
+    if (!updatedOrder) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Order not found or not authorized to update' 
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Order status updated successfully',
+      order: updatedOrder
+    });
   } catch (error) {
     console.error('Error updating order status:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ 
+      success: false,
+      message: 'Error updating order status',
+      error: error.message 
+    });
   }
 };
-
