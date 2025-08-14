@@ -4,6 +4,7 @@ const Cart = require('../models/Cart');
 const Stock = require('../models/Stock'); 
 
 // Create order from cart
+// Create order from cart
 exports.createOrder = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -20,11 +21,16 @@ exports.createOrder = async (req, res) => {
       });
     }
     
-    // Get cart with populated products
+    // Get cart with populated products and their stock information
     const cart = await Cart.findOne({ buyer: req.user.id })
       .populate({
         path: 'items.product',
-        select: 'name price harvestId quantity'
+        select: 'name price harvestId quantity',
+        populate: {
+          path: 'harvestId',
+          model: 'Stock',
+          select: 'currentAmount totalAmount cropName'
+        }
       })
       .session(session);
       
@@ -47,7 +53,7 @@ exports.createOrder = async (req, res) => {
           throw new Error(`Product ${item.product.name} is not properly linked to stock`);
         }
 
-        const stock = await Stock.findById(item.product.harvestId).session(session);
+        const stock = item.product.harvestId;
         if (!stock) {
           throw new Error(`Stock record not found for product ${item.product.name}`);
         }
@@ -67,19 +73,19 @@ exports.createOrder = async (req, res) => {
         
         orderItems.push({
           productId: item.product._id,
-          harvestId: item.product.harvestId,
+          harvestId: stock._id,
           quantity: requestedQuantity,
           price: item.price,
           name: item.product.name
         });
         
         stockUpdates.push({
-          harvestId: stock._id,
+          stockId: stock._id,
           quantity: requestedQuantity
         });
       } catch (error) {
         stockErrors.push({
-          product: item.product.name,
+          product: item.product?.name || 'Unknown product',
           error: error.message
         });
       }
@@ -110,15 +116,8 @@ exports.createOrder = async (req, res) => {
     // Update stock amounts
     for (const update of stockUpdates) {
       await Stock.findByIdAndUpdate(
-        update.harvestId,
+        update.stockId,
         { $inc: { currentAmount: -update.quantity } },
-        { session }
-      );
-      
-      // Also update product quantity
-      await Product.updateOne(
-        { harvestId: update.harvestId },
-        { $inc: { quantity: -update.quantity } },
         { session }
       );
     }
@@ -137,7 +136,7 @@ exports.createOrder = async (req, res) => {
       message: 'Order created successfully',
       order,
       stockUpdates: stockUpdates.map(update => ({
-        harvestId: update.harvestId,
+        stockId: update.stockId,
         quantityDeducted: update.quantity
       }))
     });
