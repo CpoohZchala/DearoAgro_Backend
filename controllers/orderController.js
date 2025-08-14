@@ -14,61 +14,84 @@ exports.createOrder = async (req, res) => {
     // Validate input
     if (!shippingAddress || !paymentMethod) {
       await session.abortTransaction();
-      return res.status(400).json({ message: 'Shipping address and payment method are required' });
+      return res.status(400).json({ 
+        success: false,
+        message: 'Shipping address and payment method are required' 
+      });
     }
     
     // Get cart with populated products
     const cart = await Cart.findOne({ buyer: req.user.id })
       .populate({
         path: 'items.product',
-        select: 'name price harvestId'
+        select: 'name price harvestId quantity'
       })
       .session(session);
       
     if (!cart || cart.items.length === 0) {
       await session.abortTransaction();
-      return res.status(400).json({ message: 'Cart is empty' });
+      return res.status(400).json({ 
+        success: false,
+        message: 'Cart is empty' 
+      });
     }
     
     // Validate stock availability and prepare order items
     const orderItems = [];
     const stockUpdates = [];
+    const stockErrors = [];
     
     for (const item of cart.items) {
-      if (!item.product.harvestId) {
-        await session.abortTransaction();
-        return res.status(400).json({ 
-          message: `Product ${item.product.name} is not properly linked to stock`
-        });
-      }
+      try {
+        if (!item.product.harvestId) {
+          throw new Error(`Product ${item.product.name} is not properly linked to stock`);
+        }
 
-      const stock = await Stock.findById(item.product.harvestId).session(session);
-      if (!stock) {
-        await session.abortTransaction();
-        return res.status(404).json({ 
-          message: `Stock not found for product ${item.product.name}` 
+        const stock = await Stock.findById(item.product.harvestId).session(session);
+        if (!stock) {
+          throw new Error(`Stock record not found for product ${item.product.name}`);
+        }
+        
+        // Convert quantities to numbers to ensure proper comparison
+        const availableStock = Number(stock.currentAmount);
+        const requestedQuantity = Number(item.quantity);
+        
+        if (availableStock < requestedQuantity) {
+          throw new Error(`Insufficient stock for ${item.product.name}. Available: ${availableStock}, Requested: ${requestedQuantity}`);
+        }
+        
+        // Verify product has enough quantity
+        if (item.product.quantity < requestedQuantity) {
+          throw new Error(`Product ${item.product.name} quantity is insufficient. Available: ${item.product.quantity}, Requested: ${requestedQuantity}`);
+        }
+        
+        orderItems.push({
+          productId: item.product._id,
+          harvestId: item.product.harvestId,
+          quantity: requestedQuantity,
+          price: item.price,
+          name: item.product.name
+        });
+        
+        stockUpdates.push({
+          harvestId: stock._id,
+          quantity: requestedQuantity
+        });
+      } catch (error) {
+        stockErrors.push({
+          product: item.product.name,
+          error: error.message
         });
       }
-      
-      if (stock.currentAmount < item.quantity) {
-        await session.abortTransaction();
-        return res.status(400).json({ 
-          message: `Insufficient stock for ${item.product.name}. Available: ${stock.currentAmount}, Requested: ${item.quantity}`,
-          availableQuantity: stock.currentAmount
-        });
-      }
-      
-      orderItems.push({
-        productId: item.product._id,
-        harvestId: item.product.harvestId,
-        quantity: item.quantity,
-        price: item.price,
-        name: item.product.name
-      });
-      
-      stockUpdates.push({
-        harvestId: stock._id,
-        quantity: item.quantity
+    }
+    
+    // If any stock errors, abort the transaction
+    if (stockErrors.length > 0) {
+      await session.abortTransaction();
+      return res.status(400).json({
+        success: false,
+        message: 'Stock validation failed',
+        errors: stockErrors
       });
     }
     
@@ -89,7 +112,14 @@ exports.createOrder = async (req, res) => {
       await Stock.findByIdAndUpdate(
         update.harvestId,
         { $inc: { currentAmount: -update.quantity } },
-        { session, new: true }
+        { session }
+      );
+      
+      // Also update product quantity
+      await Product.updateOne(
+        { harvestId: update.harvestId },
+        { $inc: { quantity: -update.quantity } },
+        { session }
       );
     }
     
@@ -102,20 +132,13 @@ exports.createOrder = async (req, res) => {
     
     await session.commitTransaction();
     
-    // Fetch updated stock data for response
-    const updatedStocks = await Stock.find({
-      _id: { $in: stockUpdates.map(u => u.harvestId) }
-    }).lean();
-    
     res.status(201).json({
       success: true,
       message: 'Order created successfully',
       order,
-      updatedStocks: updatedStocks.map(s => ({
-        harvestId: s._id,
-        cropName: s.cropName,
-        currentAmount: s.currentAmount,
-        totalAmount: s.totalAmount
+      stockUpdates: stockUpdates.map(update => ({
+        harvestId: update.harvestId,
+        quantityDeducted: update.quantity
       }))
     });
   } catch (error) {
@@ -123,8 +146,8 @@ exports.createOrder = async (req, res) => {
     console.error('Order creation error:', error);
     res.status(500).json({ 
       success: false,
-      message: error.message || 'Error creating order',
-      error: error.toString() 
+      message: 'Error creating order',
+      error: error.message 
     });
   } finally {
     session.endSession();
