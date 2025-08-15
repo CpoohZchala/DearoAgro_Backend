@@ -104,11 +104,7 @@ exports.deleteByHarvestId = async (req, res) => {
   }
 };
 
-
-// controllers/productController.js
-const Product = require("../models/Product");
-
-// Add this new method for simplified crop creation
+// Simplified crop creation
 exports.addCrop = async (req, res) => {
   try {
     const { name, category, image } = req.body;
@@ -133,15 +129,7 @@ exports.addCrop = async (req, res) => {
   }
 };
 
-// Make sure all other exports are present...
-exports.getAllProducts = async (req, res) => { /* ... */ };
-exports.getProductById = async (req, res) => { /* ... */ };
-exports.addProduct = async (req, res) => { /* ... */ };
-exports.updateProduct = async (req, res) => { /* ... */ };
-exports.deleteProduct = async (req, res) => { /* ... */ };
-exports.deleteByHarvestId = async (req, res) => { /* ... */ };
-
-// Add this if using Solution 3
+// Simplified crop update
 exports.updateCrop = async (req, res) => {
   try {
     const { name, category, image } = req.body;
