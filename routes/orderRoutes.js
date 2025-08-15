@@ -20,6 +20,5 @@ router.get('/:id', getOrderById);
 router.delete('/:id',deleteOrder);
 
 // PUT /api/orders/status/:orderId
-router.patch('/:orderId/complete', updateOrderStatus);
-
+router.put('/status/:orderId', updateOrderStatus);
 module.exports = router;

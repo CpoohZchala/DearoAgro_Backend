@@ -299,7 +299,7 @@ exports.updateOrderStatus = async (req, res) => {
         _id: orderId, 
         status: 'pending' 
       },
-      { status: 'complete' }, 
+      { $set: { status: 'complete' } },
       { new: true, runValidators: true }
     ).populate('items.productId', 'name');
 
