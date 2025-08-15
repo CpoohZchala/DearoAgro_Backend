@@ -22,54 +22,48 @@ exports.getProductById = async (req, res) => {
 };
 
 // Add a new product
-// Updated addProduct
 exports.addProduct = async (req, res) => {
   try {
     const { name, price, image, category, quantity, harvestId } = req.body;
 
-    // Only validate required fields
-    if (!name || !image || !category) {
-      return res.status(400).json({ message: "Name, image, and category are required" });
+    // Validate input (including harvestId)
+    if (!name || !price || !image || !category || quantity === undefined || !harvestId) {
+      return res.status(400).json({ message: "All fields including harvestId are required" });
     }
 
-    // Create product with defaults for missing fields
-    const product = new Product({ 
-      name, 
-      image, 
-      category,
-      price: price || 0,
-      quantity: quantity || 0,
-      harvestId: harvestId || null
-    });
-    
+    // Create a new product
+    const product = new Product({ name, price, image, category, quantity, harvestId });
     await product.save();
+
     res.status(201).json(product);
   } catch (error) {
     res.status(500).json({ message: "Error adding product" });
   }
 };
 
-// Updated updateProduct
+// Update a product by ID
 exports.updateProduct = async (req, res) => {
   const { name, price, image, category, quantity, harvestId } = req.body;
   const productId = req.params.id;
 
+  if (!productId) {
+    return res.status(400).json({ message: "Product ID is required" });
+  }
+  if (!harvestId) {
+    return res.status(400).json({ message: "Harvest ID is required" });
+  }
+
   try {
-    const product = await Product.findById(productId);
-    if (!product) {
+    const updatedProduct = await Product.findByIdAndUpdate(
+      productId,
+      { name, price, image, category, quantity, harvestId },
+      { new: true }
+    );
+
+    if (!updatedProduct) {
       return res.status(404).json({ message: "Product not found" });
     }
-
-    // Update only the fields that are provided
-    if (name !== undefined) product.name = name;
-    if (image !== undefined) product.image = image;
-    if (category !== undefined) product.category = category;
-    if (price !== undefined) product.price = price;
-    if (quantity !== undefined) product.quantity = quantity;
-    if (harvestId !== undefined) product.harvestId = harvestId;
-
-    await product.save();
-    res.status(200).json(product);
+    res.status(200).json(updatedProduct);
   } catch (error) {
     console.error("Error updating product:", error);
     res.status(500).json({ message: "Error updating product", error: error.message });
@@ -107,5 +101,59 @@ exports.deleteByHarvestId = async (req, res) => {
   } catch (err) {
     console.error('Error deleting product by harvestId:', err);
     res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+
+// controllers/productController.js
+const Product = require("../models/Product");
+
+// Add this new method for simplified crop creation
+exports.addCrop = async (req, res) => {
+  try {
+    const { name, category, image } = req.body;
+    
+    if (!name || !category || !image) {
+      return res.status(400).json({ message: "Name, category and image are required" });
+    }
+
+    const product = new Product({ 
+      name, 
+      category, 
+      image,
+      price: 0,
+      quantity: 0,
+      harvestId: null
+    });
+    
+    await product.save();
+    res.status(201).json({ name, category, image, _id: product._id });
+  } catch (error) {
+    res.status(500).json({ message: "Error adding crop" });
+  }
+};
+
+// Make sure all other exports are present...
+exports.getAllProducts = async (req, res) => { /* ... */ };
+exports.getProductById = async (req, res) => { /* ... */ };
+exports.addProduct = async (req, res) => { /* ... */ };
+exports.updateProduct = async (req, res) => { /* ... */ };
+exports.deleteProduct = async (req, res) => { /* ... */ };
+exports.deleteByHarvestId = async (req, res) => { /* ... */ };
+
+// Add this if using Solution 3
+exports.updateCrop = async (req, res) => {
+  try {
+    const { name, category, image } = req.body;
+    const product = await Product.findByIdAndUpdate(
+      req.params.id,
+      { name, category, image },
+      { new: true }
+    );
+    
+    if (!product) return res.status(404).json({ message: "Crop not found" });
+    res.status(200).json({ name, category, image, _id: product._id });
+  } catch (error) {
+    res.status(500).json({ message: "Error updating crop" });
   }
 };
