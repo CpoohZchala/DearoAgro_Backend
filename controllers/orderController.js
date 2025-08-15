@@ -292,31 +292,27 @@ exports.deleteOrder = async (req, res) => {
 exports.updateOrderStatus = async (req, res) => {
   try {
     const { orderId } = req.params;
-    const { status } = req.body;
-
-    if (!['pending', 'processing', 'shipped', 'delivered', 'cancelled'].includes(status)) {
-      return res.status(400).json({ 
-        success: false,
-        message: 'Invalid status value' 
-      });
-    }
-
+    
+    // Only allow changing from pending to complete
     const updatedOrder = await Order.findOneAndUpdate(
-      { _id: orderId, buyerId: req.user.id },
-      { status },
+      { 
+        _id: orderId, 
+        status: 'pending' 
+      },
+      { status: 'complete' }, 
       { new: true, runValidators: true }
     ).populate('items.productId', 'name');
 
     if (!updatedOrder) {
       return res.status(404).json({ 
         success: false,
-        message: 'Order not found or not authorized to update' 
+        message: 'Order not found or already completed' 
       });
     }
 
     res.status(200).json({
       success: true,
-      message: 'Order status updated successfully',
+      message: 'Order marked as complete',
       order: updatedOrder
     });
   } catch (error) {
@@ -328,4 +324,3 @@ exports.updateOrderStatus = async (req, res) => {
     });
   }
 };
-
