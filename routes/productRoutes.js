@@ -19,5 +19,10 @@ router.delete('/:id', productController.deleteProduct);
 
 router.delete('/by-harvest/:harvestId', productController.deleteByHarvestId);
 
+router.post('/crops', productController.addCrop);
+
+router.put('/crops/:id', productController.updateCrop);
+
+
 
 module.exports = router;

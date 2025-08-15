@@ -22,48 +22,54 @@ exports.getProductById = async (req, res) => {
 };
 
 // Add a new product
+// Updated addProduct
 exports.addProduct = async (req, res) => {
   try {
     const { name, price, image, category, quantity, harvestId } = req.body;
 
-    // Validate input (including harvestId)
-    if (!name || !price || !image || !category || quantity === undefined || !harvestId) {
-      return res.status(400).json({ message: "All fields including harvestId are required" });
+    // Only validate required fields
+    if (!name || !image || !category) {
+      return res.status(400).json({ message: "Name, image, and category are required" });
     }
 
-    // Create a new product
-    const product = new Product({ name, price, image, category, quantity, harvestId });
+    // Create product with defaults for missing fields
+    const product = new Product({ 
+      name, 
+      image, 
+      category,
+      price: price || 0,
+      quantity: quantity || 0,
+      harvestId: harvestId || null
+    });
+    
     await product.save();
-
     res.status(201).json(product);
   } catch (error) {
     res.status(500).json({ message: "Error adding product" });
   }
 };
 
-// Update a product by ID
+// Updated updateProduct
 exports.updateProduct = async (req, res) => {
   const { name, price, image, category, quantity, harvestId } = req.body;
   const productId = req.params.id;
 
-  if (!productId) {
-    return res.status(400).json({ message: "Product ID is required" });
-  }
-  if (!harvestId) {
-    return res.status(400).json({ message: "Harvest ID is required" });
-  }
-
   try {
-    const updatedProduct = await Product.findByIdAndUpdate(
-      productId,
-      { name, price, image, category, quantity, harvestId },
-      { new: true }
-    );
-
-    if (!updatedProduct) {
+    const product = await Product.findById(productId);
+    if (!product) {
       return res.status(404).json({ message: "Product not found" });
     }
-    res.status(200).json(updatedProduct);
+
+    // Update only the fields that are provided
+    if (name !== undefined) product.name = name;
+    if (image !== undefined) product.image = image;
+    if (category !== undefined) product.category = category;
+    if (price !== undefined) product.price = price;
+    if (quantity !== undefined) product.quantity = quantity;
+    if (harvestId !== undefined) product.harvestId = harvestId;
+
+    await product.save();
+    res.status(200).json(product);
   } catch (error) {
     console.error("Error updating product:", error);
     res.status(500).json({ message: "Error updating product", error: error.message });
