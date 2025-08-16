@@ -149,31 +149,42 @@ router.post('/', async (req, res) => {
 // Update stock
 router.put("/update", async (req, res) => {
   try {
-    const { id, ...updateData } = req.body;
-    
-    if (!id) {
-      return res.status(400).json({ error: "Stock ID is required" });
+    const { id, totalAmount, currentAmount, ...rest } = req.body;
+
+    if (!id) return res.status(400).json({ error: "Stock ID required" });
+
+    const existing = await Stock.findById(id);
+    if (!existing) return res.status(404).json({ error: "Stock not found" });
+
+    const updateData = { ...rest };
+
+    const clientSendsCurrent = typeof currentAmount === "number";
+
+    if (typeof totalAmount === "number") {
+      const prevTotal = Number(existing.totalAmount || 0);
+      const prevCurrent = Number(existing.currentAmount || prevTotal);
+      const newTotal = Number(totalAmount);
+      const delta = newTotal - prevTotal;
+
+      if (!clientSendsCurrent) {
+        let newCurrent = prevCurrent + delta;
+        if (newCurrent < 0) newCurrent = 0;
+        if (newCurrent > newTotal) newCurrent = newTotal;
+        updateData.currentAmount = newCurrent;
+      } else {
+        updateData.currentAmount = Number(currentAmount);
+      }
+
+      updateData.totalAmount = newTotal;
+    } else if (clientSendsCurrent) {
+      updateData.currentAmount = Number(currentAmount);
     }
 
-    const updatedStock = await Stock.findByIdAndUpdate(id, updateData, { 
-      new: true,
-      runValidators: true
-    });
-    
-    if (!updatedStock) {
-      return res.status(404).json({ error: "Stock not found" });
-    }
-    
-    res.status(200).json({ 
-      message: "Stock updated successfully",
-      data: updatedStock
-    });
+    const updatedStock = await Stock.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
+    res.status(200).json({ message: "Stock updated successfully", data: updatedStock });
   } catch (error) {
-    console.error('Stock update error:', error);
-    res.status(500).json({ 
-      error: "Failed to update stock",
-      details: error.message
-    });
+    console.error("Stock update error:", error);
+    res.status(500).json({ error: "Failed to update stock", details: error.message });
   }
 });
 
