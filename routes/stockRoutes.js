@@ -158,29 +158,31 @@ router.put("/update", async (req, res) => {
 
     const updateData = { ...rest };
 
-    const clientSendsCurrent = typeof currentAmount === "number";
+    const prevTotal = Number(existing.totalAmount || 0);
+    const prevCurrent = Number(existing.currentAmount || prevTotal);
+    const newTotal = totalAmount !== undefined ? Number(totalAmount) : prevTotal;
 
-    if (typeof totalAmount === "number") {
-      const prevTotal = Number(existing.totalAmount || 0);
-      const prevCurrent = Number(existing.currentAmount || prevTotal);
-      const newTotal = Number(totalAmount);
+    // Calculate new current amount
+    let newCurrent;
+    if (currentAmount !== undefined) {
+      newCurrent = Number(currentAmount);
+    } else if (totalAmount !== undefined) {
+      // Adjust current based on change in total
       const delta = newTotal - prevTotal;
-
-      if (!clientSendsCurrent) {
-        let newCurrent = prevCurrent + delta;
-        if (newCurrent < 0) newCurrent = 0;
-        if (newCurrent > newTotal) newCurrent = newTotal;
-        updateData.currentAmount = newCurrent;
-      } else {
-        updateData.currentAmount = Number(currentAmount);
-      }
-
-      updateData.totalAmount = newTotal;
-    } else if (clientSendsCurrent) {
-      updateData.currentAmount = Number(currentAmount);
+      newCurrent = prevCurrent + delta;
+    } else {
+      newCurrent = prevCurrent;
     }
 
+    // Ensure currentAmount is not negative and does not exceed totalAmount
+    if (newCurrent < 0) newCurrent = 0;
+    if (newCurrent > newTotal) newCurrent = newTotal;
+
+    updateData.totalAmount = newTotal;
+    updateData.currentAmount = newCurrent;
+
     const updatedStock = await Stock.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
+
     res.status(200).json({ message: "Stock updated successfully", data: updatedStock });
   } catch (error) {
     console.error("Stock update error:", error);
