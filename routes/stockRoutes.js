@@ -265,4 +265,59 @@ router.get('/dashboard/summary', async (req, res) => {
   }
 });
 
+// GET all listed products (isProductListed = true)
+router.get('/listed/products', async (req, res) => {
+  try {
+    const listedStocks = await Stock.find({ isProductListed: true }).sort({ createdAt: -1 });
+    
+    if (!listedStocks || listedStocks.length === 0) {
+      return res.status(404).json({ error: "No listed products found" });
+    }
+
+    res.status(200).json({
+      message: "Listed products fetched successfully",
+      count: listedStocks.length,
+      data: listedStocks
+    });
+  } catch (error) {
+    console.error('Error fetching listed products:', error);
+    res.status(500).json({ 
+      error: "Failed to fetch listed products",
+      details: error.message
+    });
+  }
+});
+
+// GET all products where isProductListed = true (alternative route)
+router.get('/products/listed', async (req, res) => {
+  try {
+    const listedProducts = await Stock.find({ 
+      isProductListed: true,
+      currentAmount: { $gt: 0 } // Only show products with available stock
+    })
+    .select('memberId fullName cropName currentAmount pricePerKg harvestDate currentPrice quantity createdAt')
+    .sort({ createdAt: -1 });
+    
+    if (!listedProducts || listedProducts.length === 0) {
+      return res.status(200).json({ 
+        message: "No listed products available",
+        count: 0,
+        data: []
+      });
+    }
+
+    res.status(200).json({
+      message: "Listed products retrieved successfully",
+      count: listedProducts.length,
+      data: listedProducts
+    });
+  } catch (error) {
+    console.error('Error fetching listed products:', error);
+    res.status(500).json({ 
+      error: "Failed to fetch listed products",
+      details: error.message
+    });
+  }
+});
+
 module.exports = router;
