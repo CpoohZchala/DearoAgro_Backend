@@ -1,10 +1,10 @@
 const mongoose = require('mongoose');
 
 const CartItemSchema = new mongoose.Schema({
-  product: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'Product', 
-    required: true 
+  stockId: { // Store stock id instead of product
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Stock', // reference to Stock collection
+    required: true
   },
   quantity: { 
     type: Number, 
@@ -26,7 +26,7 @@ const CartItemSchema = new mongoose.Schema({
   image: {
     type: String
   }
-}, { _id: true }); // Ensure items have their own IDs
+}, { _id: true });
 
 const CartSchema = new mongoose.Schema({
   buyer: { 
@@ -61,7 +61,7 @@ CartSchema.pre('save', function(next) {
   next();
 });
 
-// Add instance method for updating quantities
+// Instance method to update quantity
 CartSchema.methods.updateItemQuantity = async function(itemId, newQuantity) {
   const item = this.items.id(itemId);
   if (!item) throw new Error('Item not found in cart');

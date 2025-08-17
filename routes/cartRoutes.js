@@ -19,10 +19,10 @@ router.use((req, res, next) => {
   next();
 });
 
-router.get('/', getCart);                      // Get cart
-router.post('/add', addToCart);                // Add item to cart
-router.put('/update/:itemId', updateCartItem);        // Update cart item
-router.delete('/remove/:itemId', removeFromCart);     // Remove item from cart
-router.delete('/', clearCart);                 // Clear cart
+router.get('/', getCart);                        // Get cart
+router.post('/add', addToCart);                  // Add stock to cart
+router.put('/update/:itemId', updateCartItem);  // Update cart item quantity
+router.delete('/remove/:itemId', removeFromCart); // Remove item
+router.delete('/', clearCart);                   // Clear cart
 
 module.exports = router;
