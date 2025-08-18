@@ -10,19 +10,19 @@ const authenticate = require('../middleware/authenticate');
 
 const router = express.Router();
 
-// Protect all routes with buyer authentication
-router.use(authenticate);
-router.use((req, res, next) => {
+// Buyer-only middleware
+const buyerOnly = (req, res, next) => {
   if (req.user.userType !== 'Buyer') {
     return res.status(403).json({ message: 'Access denied. Buyers only.' });
   }
   next();
-});
+};
 
-router.get('/cart', authenticate, cartController.getCart);
-router.post('/cart/add', authenticate, cartController.addToCart);
-router.put('/cart/update/:itemId', authenticate, cartController.updateCartItem);
-router.delete('/cart/remove/:itemId', authenticate, cartController.removeFromCart);
-router.delete('/cart/clear', authenticate, cartController.clearCart); // Clear cart
+// Cart routes with middleware applied per route
+router.get('/cart', authenticate, buyerOnly, getCart);
+router.post('/cart/add', authenticate, buyerOnly, addToCart);
+router.put('/cart/update/:itemId', authenticate, buyerOnly, updateCartItem);
+router.delete('/cart/remove/:itemId', authenticate, buyerOnly, removeFromCart);
+router.delete('/cart/clear', authenticate, buyerOnly, clearCart);
 
 module.exports = router;
