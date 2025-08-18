@@ -104,3 +104,24 @@ exports.clearCart = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+exports.getCart = async (req, res) => {
+  try {
+    console.log("Fetching cart for user:", req.user); // Debug log
+    
+    // Use req.user.id instead of req.user._id
+    const cart = await Cart.findOne({ buyer: req.user.id }).populate('items.stockId');
+    
+    if (!cart) {
+      console.log("No cart found for user:", req.user.id);
+      return res.status(404).json({ message: "Cart not found" });
+    }
+    
+    console.log("Found cart:", cart); // Debug log
+    res.json(cart);
+  } catch (err) {
+    console.error("Error in getCart:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
