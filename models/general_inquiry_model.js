@@ -3,13 +3,11 @@ const Schema = mongoose.Schema;
 
 const general_InquirySchema = new Schema(
   {
-    title: { type: String, required: true },
-    description: { type: String, required: true },
-    date: { type: Date, required: true },
-    imagePath: { type: String },
-    documentPath: { type: String },
-    status: { type: String, default: "pending" },
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // Added userId field
+    title: {type: String,required: true,},
+    description: {type: String,required: true,},
+    date: {type: Date,required: true,},
+    imagePath: {type: String,required: false,},
+    documentPath: {type: String,required: false,}, 
   },
   { timestamps: true }
 );

@@ -2,9 +2,10 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const SuperAdmin = require('../models/SuperAdmin'); // Import the SuperAdmin model
-const Farmer = require('../models/Farmer'); // Import the Farmer model
-const MarketingOfficer = require('../models/MarketingOfficer'); // Import the MarketingOfficer model
+const SuperAdmin = require('../models/SuperAdmin'); 
+const Farmer = require('../models/Farmer'); 
+const MarketingOfficer = require('../models/MarketingOfficer'); 
+const Buyer = require('../models/Buyer');
 const dotenv = require('dotenv');
 const cookieParser = require('cookie-parser');
 
@@ -72,6 +73,24 @@ router.post('/signup', async (req, res) => {
             return res.status(201).json({ message: 'Super Admin registered successfully.' });
         }
 
+        if (userType === 'Buyer') {
+            // Check if the Buyer already exists
+            let buyerExists = await Buyer.findOne({ mobileNumber });
+            if (buyerExists) {
+                return res.status(400).json({ message: 'Buyer already exists with this mobile number.' });
+            }
+
+            // Hash the password
+            const hashedPassword = await bcrypt.hash(password, 10);
+
+            // Create new Buyer
+            const buyer = new Buyer({ fullName, mobileNumber, password: hashedPassword });
+
+            // Save the Buyer in the database
+            await buyer.save();
+            return res.status(201).json({ message: 'Buyer registered successfully.' });
+        }
+
         // Check if the user already exists
         let userExists = await User.findOne({ mobileNumber });
         if (userExists) {
@@ -84,9 +103,9 @@ router.post('/signup', async (req, res) => {
         }
 
         // Hash the password
-        console.log('Password before hashing:', password); // Debugging log
+        console.log('Password before hashing:', password);
         const hashedPassword = await bcrypt.hash(password, 10);
-        console.log('Hashed password:', hashedPassword); // Debugging log
+        console.log('Hashed password:', hashedPassword);
         
         // Create new user
         const user = new User({ fullName, mobileNumber, password: hashedPassword, userType });
@@ -141,13 +160,13 @@ router.post('/signin', async (req, res) => {
 
         if (req.body.userType === 'Farmer') {
             const farmer = await Farmer.findOne({ mobileNumber });
-            console.log('Farmer fetched from DB:', farmer); // Debugging log
+            console.log('Farmer fetched from DB:', farmer);
             if (!farmer) {
                 return res.status(400).json({ message: 'Invalid Credentials' });
             }
 
             const isMatch = await bcrypt.compare(password, farmer.password);
-            console.log('Password comparison result for Farmer:', isMatch); // Debugging log
+            console.log('Password comparison result for Farmer:', isMatch);
             if (!isMatch) {
                 return res.status(400).json({ message: 'Invalid Credentials' });
             }
@@ -168,13 +187,13 @@ router.post('/signin', async (req, res) => {
 
         if (req.body.userType === 'Marketing Officer') {
             const marketingOfficer = await MarketingOfficer.findOne({ mobileNumber });
-            console.log('Marketing Officer fetched from DB:', marketingOfficer); // Debugging log
+            console.log('Marketing Officer fetched from DB:', marketingOfficer);
             if (!marketingOfficer) {
                 return res.status(400).json({ message: 'Invalid Credentials' });
             }
 
             const isMatch = await bcrypt.compare(password, marketingOfficer.password);
-            console.log('Password comparison result for Marketing Officer:', isMatch); // Debugging log
+            console.log('Password comparison result for Marketing Officer:', isMatch);
             if (!isMatch) {
                 return res.status(400).json({ message: 'Invalid Credentials' });
             }
@@ -193,14 +212,39 @@ router.post('/signin', async (req, res) => {
             });
         }
 
+        if (req.body.userType === 'Buyer') {
+            const buyer = await Buyer.findOne({ mobileNumber });
+            if (!buyer) {
+                return res.status(400).json({ message: 'Invalid Credentials' });
+            }
+
+            const isMatch = await bcrypt.compare(password, buyer.password);
+            if (!isMatch) {
+                return res.status(400).json({ message: 'Invalid Credentials' });
+            }
+
+            const token = jwt.sign(
+                { id: buyer._id, userType: 'Buyer' },
+                process.env.JWT_SECRET,
+                { expiresIn: '24h' }
+            );
+
+            return res.status(200).json({
+                message: 'Login successful',
+                token,
+                userType: 'Buyer',
+                userId: buyer._id
+            });
+        }
+
         const user = await User.findOne({ mobileNumber });
-        console.log('User fetched from DB:', user); // Debugging log
+        console.log('User fetched from DB:', user);
         if (!user) {
             return res.status(400).json({ message: 'Invalid Credentials' });
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
-        console.log('Password comparison result for User:', isMatch); // Debugging log
+        console.log('Password comparison result for User:', isMatch);
         if (!isMatch) {
             return res.status(400).json({ message: 'Invalid Credentials' });
         }
@@ -251,6 +295,27 @@ router.get('/me', async (req, res) => {
         console.error(error);
         res.status(500).json({ message: 'Server Error' });
     }
+});
+
+// Refresh Token
+router.post('/refresh-token', (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ message: 'Please authenticate' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET, { ignoreExpiration: true }); // Ignore expiration
+    const newToken = jwt.sign(
+      { id: decoded.id, userType: decoded.userType },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRE } 
+    );
+    res.status(200).json({ token: newToken });
+  } catch (error) {
+    console.error('Token refresh error:', error);
+    return res.status(403).json({ message: 'Invalid token' });
+  }
 });
 
 module.exports = router;

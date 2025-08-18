@@ -6,11 +6,31 @@ const router = express.Router();
 
 // Submit Form Data
 router.post("/cropsubmit", async (req, res) => {
+  console.log(req.body); 
   try {
+    const { description, fertilizerType, fertilizerAmount, fertilizerUnit } = req.body;
+
+    if (description === "පොහොර යෙදීම") {
+
+      if (
+        !fertilizerType ||
+        fertilizerType.trim() === "" ||
+        fertilizerAmount === undefined ||
+        fertilizerAmount === null ||
+        fertilizerAmount === "" ||
+        isNaN(Number(fertilizerAmount)) ||
+        !fertilizerUnit ||
+        fertilizerUnit.trim() === ""
+      ) {
+        return res.status(400).json({ error: "Fertilizer details required" });
+      }
+    }
+
     const cropData = new CropData(req.body);
     await cropData.save();
     res.status(201).json({ message: "Data submitted successfully!" });
   } catch (error) {
+    console.error(error); 
     res.status(500).json({ error: "Failed to submit data" });
   }
 });

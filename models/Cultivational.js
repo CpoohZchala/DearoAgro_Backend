@@ -8,6 +8,8 @@ const formSchema = new mongoose.Schema({
   startDate: { type: String, required: true },
   district: { type: String, required: true },
   city: { type: String, required: true },
+  nic: { type: String, required: true },
+  cropYieldSize: { type: Number, required: true },
 });
 
 const FormData = mongoose.model("FormData", formSchema);

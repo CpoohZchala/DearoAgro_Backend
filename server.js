@@ -11,6 +11,16 @@ const technicalIRoutes = require("./routes/technicalIRoutes");
 const farmerRoutes = require('./routes/farmerRoutes'); 
 const superAdminRoutes = require('./routes/superAdminRoutes');
 const groupRoutes = require('./routes/groupRoutes'); 
+const soilTestReportRoutes= require('./routes/soilTestReportRoutes');
+const buyerRoutes = require('./routes/buyerRoutes');
+const productRoutes = require('./routes/productRoutes');
+const cartRoutes = require('./routes/cartRoutes');
+const orderRoutes = require('./routes/orderRoutes');
+const marketingOfficerRoutes = require('./routes/marketingOfficerRoutes');
+const stockRoutes = require('./routes/stockRoutes');
+const newCropRoutes = require ('./routes/newCropRoutes')
+
+
 
 
 
@@ -18,7 +28,13 @@ const groupRoutes = require('./routes/groupRoutes');
 connectDB();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: [
+    'https://dearoagro-admin-dashboard.onrender.com',
+    'http://localhost:5174'
+  ],
+  credentials: true
+}));
 app.use(express.json());
 
 // Routes
@@ -32,8 +48,17 @@ app.use("/api", technicalIRoutes);
 app.use('/api/farmers', farmerRoutes);
 app.use('/superAdminRoutes', superAdminRoutes);
 app.use('/api/groups', groupRoutes);
+app.use('/api', soilTestReportRoutes);
+app.use('/api/buyers', buyerRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/cart', cartRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/officers', marketingOfficerRoutes);
+app.use('/api/stocks', stockRoutes);
+app.use("/api/crops", newCropRoutes);
 
 
+app.use('/uploads', express.static('uploads')); 
 
 
 // Server

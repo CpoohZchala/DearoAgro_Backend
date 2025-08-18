@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Technical_Inquiry = require("../models/technical_inquiry_model");
+const Farmer = require("../models/Farmer");
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -24,7 +25,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ 
   storage: storage,
-  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+  limits: { fileSize: 10 * 1024 * 1024 }
 }).fields([
   { name: 'imagePath', maxCount: 1 },
   { name: 'documentPath', maxCount: 1 }
@@ -34,7 +35,6 @@ const upload = multer({
 router.post("/tinquiry", (req, res) => {
   upload(req, res, async (err) => {
     if (err) {
-      console.error('Upload error:', err);
       return res.status(500).json({ 
         message: "File upload failed",
         error: err.message 
@@ -42,9 +42,8 @@ router.post("/tinquiry", (req, res) => {
     }
 
     try {
-      const { title, description, date } = req.body;
+      const { title, description, date, farmerId } = req.body;
       
-      // Get file paths if files were uploaded
       const imagePath = req.files['imagePath'] ? 
         '/uploads/' + req.files['imagePath'][0].filename : null;
       const documentPath = req.files['documentPath'] ? 
@@ -54,6 +53,7 @@ router.post("/tinquiry", (req, res) => {
         title,
         description,
         date,
+        farmerId,
         imagePath,
         documentPath,
       });
@@ -61,7 +61,6 @@ router.post("/tinquiry", (req, res) => {
       const savedInquiry = await newInquiry.save();
       res.status(201).json(savedInquiry);
     } catch (err) {
-      console.error('Database error:', err);
       res.status(500).json({ 
         message: "Error creating inquiry",
         error: err.message 
@@ -69,6 +68,29 @@ router.post("/tinquiry", (req, res) => {
     }
   });
 });
+
+// Fetch inquiries by farmer ID
+router.get("/tinquiries/farmer/:farmerId", async (req, res) => {
+  try {
+    const { farmerId } = req.params;
+
+    // Validate farmer existence
+    const farmer = await Farmer.findById(farmerId);
+    if (!farmer) {
+      return res.status(404).json({ message: "Farmer not found" });
+    }
+
+    // Fetch inquiries for the farmer
+    const inquiries = await Technical_Inquiry.find({ farmerId });
+    res.status(200).json(inquiries);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching inquiries", error: err.message });
+  }
+});
+
+module.exports = router;
+
+
 
 // Get all inquiries
 router.get("/tinquiries", async (req, res) => {
