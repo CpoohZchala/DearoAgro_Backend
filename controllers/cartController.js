@@ -16,6 +16,8 @@ exports.getCart = async (req, res) => {
 exports.addToCart = async (req, res) => {
   try {
     const { stockId, quantity } = req.body;
+    console.log("User ID from token:", req.user._id); // Debug user ID
+    
     const stock = await Stock.findById(stockId);
     if (!stock) return res.status(404).json({ message: "Stock not found" });
 
@@ -25,7 +27,11 @@ exports.addToCart = async (req, res) => {
 
     let cart = await Cart.findOne({ buyer: req.user._id });
     if (!cart) {
-      cart = new Cart({ buyer: req.user._id, items: [] });
+      console.log("Creating new cart for buyer:", req.user._id); // Debug
+      cart = new Cart({ 
+        buyer: req.user._id, 
+        items: [] 
+      });
     }
 
     const existingItem = cart.items.find(item => item.stockId.toString() === stockId);
@@ -44,6 +50,7 @@ exports.addToCart = async (req, res) => {
     await cart.save();
     res.json(cart);
   } catch (err) {
+    console.error("Error in addToCart:", err); // Debug
     res.status(500).json({ error: err.message });
   }
 };
