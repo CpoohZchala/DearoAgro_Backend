@@ -1,10 +1,17 @@
 const express = require('express');
-const { getCart, addToCart, updateCartItem, removeFromCart, clearCart } = require('../controllers/cartController');
+const {
+  getCart,
+  addToCart,
+  updateCartItem,
+  removeFromCart,
+  clearCart
+} = require('../controllers/cartController');
 const authenticate = require('../middleware/authenticate');
 
 const router = express.Router();
 
-router.use(authenticate); // Buyer must be logged in
+// Protect all routes
+router.use(authenticate);
 
 router.get('/', getCart);
 router.post('/add', addToCart);

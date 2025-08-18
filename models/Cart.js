@@ -26,7 +26,7 @@ CartSchema.pre('save', function(next) {
   next();
 });
 
-// Instance method to update quantity
+// Update quantity
 CartSchema.methods.updateItemQuantity = async function(itemId, newQuantity) {
   const item = this.items.id(itemId);
   if (!item) throw new Error('Item not found in cart');

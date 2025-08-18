@@ -1,4 +1,5 @@
 const Cart = require('../models/Cart');
+const Stock = require('../models/Stock');
 
 // Get Cart by Buyer
 exports.getCart = async (req, res) => {
@@ -11,10 +12,16 @@ exports.getCart = async (req, res) => {
   }
 };
 
-// Add Item to Cart
+// Add to Cart
 exports.addToCart = async (req, res) => {
   try {
-    const { stockId, name, image, quantity, price } = req.body;
+    const { stockId, quantity } = req.body;
+    const stock = await Stock.findById(stockId);
+    if (!stock) return res.status(404).json({ message: "Stock not found" });
+
+    if (quantity > stock.currentAmount) {
+      return res.status(400).json({ message: `Only ${stock.currentAmount} kg available` });
+    }
 
     let cart = await Cart.findOne({ buyer: req.user._id });
     if (!cart) {
@@ -25,7 +32,13 @@ exports.addToCart = async (req, res) => {
     if (existingItem) {
       existingItem.quantity += quantity;
     } else {
-      cart.items.push({ stockId, name, image, quantity, price });
+      cart.items.push({
+        stockId: stock._id,
+        name: stock.cropName,
+        image: stock.imageUrl || '',
+        quantity,
+        price: stock.currentPrice || stock.pricePerKg
+      });
     }
 
     await cart.save();
@@ -35,7 +48,7 @@ exports.addToCart = async (req, res) => {
   }
 };
 
-// Update Item Quantity
+// Update Cart Item
 exports.updateCartItem = async (req, res) => {
   try {
     const { itemId, quantity } = req.body;
@@ -49,14 +62,14 @@ exports.updateCartItem = async (req, res) => {
   }
 };
 
-// Remove Item from Cart
+// Remove Item
 exports.removeFromCart = async (req, res) => {
   try {
     const { itemId } = req.params;
     const cart = await Cart.findOne({ buyer: req.user._id });
     if (!cart) return res.status(404).json({ message: "Cart not found" });
 
-    cart.items.id(itemId).remove();
+    cart.items.id(itemId)?.remove();
     await cart.save();
     res.json(cart);
   } catch (err) {
