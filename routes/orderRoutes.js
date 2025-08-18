@@ -1,24 +1,21 @@
 const express = require('express');
-const { createOrder, getOrders, getOrderById ,deleteOrder,updateOrderStatus} = require('../controllers/orderController');
+const { placeOrder, getOrders, getOrderById, updateOrderStatus } = require('../controllers/orderController');
 const authenticate = require('../middleware/authenticate');
 
 const router = express.Router();
 
-// Protect all routes with authentication
-router.use(authenticate);
+router.use(authenticate); // user must be logged in
 
-// Create a new order from the cart
-router.post('/', createOrder);
+// Place new order
+router.post('/place', placeOrder);
 
-// Get all orders for the authenticated buyer
+// Get all orders for logged-in buyer
 router.get('/', getOrders);
 
-// Get a specific order by ID
+// Get a single order by ID
 router.get('/:id', getOrderById);
 
-//Delete Order
-router.delete('/:id',deleteOrder);
+// Update order status (admin/seller)
+router.put('/status', updateOrderStatus);
 
-// PUT /api/orders/status/:orderId
-router.put('/status/:orderId', updateOrderStatus);
 module.exports = router;
