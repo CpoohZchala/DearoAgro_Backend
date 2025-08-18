@@ -11,7 +11,7 @@ const authenticate = require('../middleware/authenticate');
 const router = express.Router();
 
 // Protect all routes with buyer authentication
-router.use(auth);
+router.use(authenticate);
 router.use((req, res, next) => {
   if (req.user.userType !== 'Buyer') {
     return res.status(403).json({ message: 'Access denied. Buyers only.' });
