@@ -9,7 +9,7 @@ const CartItemSchema = new mongoose.Schema({
 }, { _id: true });
 
 const CartSchema = new mongoose.Schema({
-  buyer: { type: mongoose.Schema.Types.ObjectId, ref: 'Buyer', required: true, unique: true },
+  buyer: { type: String,required: true, unique: true },
   items: [CartItemSchema],
   total: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now },
