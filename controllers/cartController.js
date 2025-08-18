@@ -80,7 +80,7 @@ exports.updateCartItem = async (req, res) => {
 exports.removeFromCart = async (req, res) => {
   try {
     const { itemId } = req.params;
-    const cart = await Cart.findOne({ buyer: req.user._id });
+    const cart = await Cart.findOne({ buyer: req.user.id });
     if (!cart) return res.status(404).json({ message: "Cart not found" });
 
     cart.items.id(itemId)?.remove();
