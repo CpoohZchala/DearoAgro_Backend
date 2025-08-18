@@ -1,17 +1,11 @@
 const express = require('express');
-const { 
-  getCart, 
-  addToCart, 
-  updateCartItem, 
-  removeFromCart, 
-  clearCart 
-} = require('../controllers/cartController');
-const auth = require('../middleware/authenticate');
+require('../controllers/cartController');
+const authenticate = require('../middleware/authenticate');
 
 const router = express.Router();
 
 // Protect all routes with buyer authentication
-router.use(auth);
+router.use(authenticate);
 router.use((req, res, next) => {
   if (req.user.userType !== 'Buyer') {
     return res.status(403).json({ message: 'Access denied. Buyers only.' });
