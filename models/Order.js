@@ -1,21 +1,21 @@
 const mongoose = require('mongoose');
 
-const OrderSchema = new mongoose.Schema({
-  buyer: { type: mongoose.Schema.Types.ObjectId, ref: 'Buyer', required: true },
+const orderSchema = new mongoose.Schema({
+  buyerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   items: [
     {
-      stockId: { type: mongoose.Schema.Types.ObjectId, ref: 'Stock', required: true },
-      name: { type: String, required: true },
-      image: { type: String },
-      quantity: { type: Number, required: true, min: [0.1, 'Minimum quantity is 0.1 kg'] },
-      price: { type: Number, required: true, min: [0, 'Price must be positive'] }
+      productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
+      harvestId: { type: mongoose.Schema.Types.ObjectId, ref: 'Stock' },
+      quantity: { type: Number, required: true },
+      price: { type: Number, required: true },
+      name: { type: String, required: true }
     }
   ],
-  totalAmount: { type: Number, required: true }, // ✅ changed from total
-  shippingAddress: { type: String, required: true }, // ✅ new field
-  paymentMethod: { type: String, required: true }, // ✅ new field
-  status: { type: String, enum: ['pending', 'complete'], default: 'pending' }, // ✅ updated enum
+  totalAmount: { type: Number, required: true },
+  shippingAddress: { type: String, required: true },
+  status: { type: String, enum: ['pending', 'complete'], default: 'pending' }, 
+  paymentMethod: { type: String, required: true },
   createdAt: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model('Order', OrderSchema);
+module.exports = mongoose.model('Order', orderSchema);
