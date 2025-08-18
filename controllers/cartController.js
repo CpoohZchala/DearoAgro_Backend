@@ -1,5 +1,5 @@
 const Cart = require('../models/Cart');
-const Stock = require('../models/Stock'); // <-- updated from Product
+const Stock = require('../models/Stock'); 
 
 // Get cart for a buyer
 exports.getCart = async (req, res) => {
