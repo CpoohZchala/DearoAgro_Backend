@@ -16,8 +16,14 @@ exports.getCart = async (req, res) => {
 exports.addToCart = async (req, res) => {
   try {
     const { stockId, quantity } = req.body;
-    console.log("User ID from token:", req.user._id); // Debug user ID
+    console.log("User from token:", req.user); // Debug the entire user object
     
+    // Use req.user.id instead of req.user._id
+    const buyerId = req.user.id;
+    if (!buyerId) {
+      return res.status(400).json({ message: "User ID not found in token" });
+    }
+
     const stock = await Stock.findById(stockId);
     if (!stock) return res.status(404).json({ message: "Stock not found" });
 
@@ -25,15 +31,16 @@ exports.addToCart = async (req, res) => {
       return res.status(400).json({ message: `Only ${stock.currentAmount} kg available` });
     }
 
-    let cart = await Cart.findOne({ buyer: req.user._id });
+    let cart = await Cart.findOne({ buyer: buyerId });
     if (!cart) {
-      console.log("Creating new cart for buyer:", req.user._id); // Debug
+      console.log("Creating new cart for buyer:", buyerId);
       cart = new Cart({ 
-        buyer: req.user._id, 
+        buyer: buyerId,  // Use buyerId here
         items: [] 
       });
     }
 
+    // Rest of your code remains the same...
     const existingItem = cart.items.find(item => item.stockId.toString() === stockId);
     if (existingItem) {
       existingItem.quantity += quantity;
@@ -50,7 +57,7 @@ exports.addToCart = async (req, res) => {
     await cart.save();
     res.json(cart);
   } catch (err) {
-    console.error("Error in addToCart:", err); // Debug
+    console.error("Error in addToCart:", err);
     res.status(500).json({ error: err.message });
   }
 };
