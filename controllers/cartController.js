@@ -92,26 +92,35 @@ exports.removeFromCart = async (req, res) => {
   }
 };
 
-// Clear Cart
+// Clear Cart - Updated Version
 exports.clearCart = async (req, res) => {
   try {
-    const cart = await Cart.findOne({ buyer: req.user._id });
+    // Try to find existing cart first
+    let cart = await Cart.findOne({ buyer: req.user._id });
     
     if (!cart) {
-      // If cart doesn't exist, create an empty one
-      const newCart = new Cart({
-        buyer: req.user.id,
-        items: []
+      // If no cart exists, return success (empty cart is same as no cart)
+      return res.status(200).json({ 
+        message: "Cart already empty",
+        cart: { items: [], total: 0 }
       });
-      await newCart.save();
-      return res.json(newCart);
     }
-
+    
+    // Clear existing cart items
     cart.items = [];
     await cart.save();
-    res.json({ message: "Cart cleared successfully", cart });
+    
+    res.status(200).json({ 
+      message: "Cart cleared successfully",
+      cart
+    });
+    
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("Error clearing cart:", err);
+    res.status(500).json({ 
+      error: "Failed to clear cart",
+      details: err.message 
+    });
   }
 };
 
