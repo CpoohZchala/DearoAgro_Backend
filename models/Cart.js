@@ -9,7 +9,12 @@ const CartItemSchema = new mongoose.Schema({
 }, { _id: true });
 
 const CartSchema = new mongoose.Schema({
-  buyer: { type: String,required: true, unique: true },
+   buyer: { 
+    type: mongoose.Schema.Types.ObjectId, // Consistent type
+    ref: 'User',
+    required: true,
+    index: true // Regular index instead of unique
+  },
   items: [CartItemSchema],
   total: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now },
