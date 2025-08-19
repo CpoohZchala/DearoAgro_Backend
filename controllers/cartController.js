@@ -96,11 +96,20 @@ exports.removeFromCart = async (req, res) => {
 exports.clearCart = async (req, res) => {
   try {
     const cart = await Cart.findOne({ buyer: req.user._id });
-    if (!cart) return res.status(404).json({ message: "Cart not found" });
+    
+    if (!cart) {
+      // If cart doesn't exist, create an empty one
+      const newCart = new Cart({
+        buyer: req.user.id,
+        items: []
+      });
+      await newCart.save();
+      return res.json(newCart);
+    }
 
     cart.items = [];
     await cart.save();
-    res.json(cart);
+    res.json({ message: "Cart cleared successfully", cart });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
