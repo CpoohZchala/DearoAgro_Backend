@@ -1,31 +1,18 @@
-const mongoose =
-    require('mongoose');
+const mongoose = require('mongoose');
 
-const Order =
-    require('../models/Order');
-
-const Cart =
-    require('../models/Cart');
-
-const Stock =
-    require('../models/Stock');
+const Order = require('../models/Order');
+const Cart = require('../models/Cart');
+const Stock = require('../models/Stock');
 
 
 // =========================================================
 // CREATE ORDER
 // =========================================================
-const createOrder = async (
-  req,
-  res,
-) => {
-  const session =
-      await mongoose.startSession();
+const createOrder = async (req, res) => {
+  const session = await mongoose.startSession();
 
   try {
-    // Buyer ID comes from JWT
-    const buyerId =
-        req.user.id;
-
+    const buyerId = req.user.id;
 
     const {
       shippingAddress,
@@ -33,58 +20,36 @@ const createOrder = async (
     } = req.body;
 
 
-    // =========================================
-    // BUYER CHECK
-    // =========================================
     if (!buyerId) {
-      return res
-          .status(401)
-          .json({
+      return res.status(401).json({
         success: false,
-        message:
-            'Buyer authentication required',
+        message: 'Buyer authentication required',
       });
     }
 
 
-    // =========================================
-    // ONLY BUYERS CAN PLACE ORDERS
-    // =========================================
     if (
       req.user.userType &&
-      req.user.userType !==
-          'Buyer'
+      req.user.userType !== 'Buyer'
     ) {
-      return res
-          .status(403)
-          .json({
+      return res.status(403).json({
         success: false,
-        message:
-            'Only buyers can place orders',
+        message: 'Only buyers can place orders',
       });
     }
 
 
-    // =========================================
-    // ADDRESS VALIDATION
-    // =========================================
     if (
       !shippingAddress ||
       !shippingAddress.trim()
     ) {
-      return res
-          .status(400)
-          .json({
+      return res.status(400).json({
         success: false,
-        message:
-            'Shipping address is required',
+        message: 'Shipping address is required',
       });
     }
 
 
-    // =========================================
-    // PAYMENT METHOD VALIDATION
-    // =========================================
     const allowedPaymentMethods = [
       'Cash on Delivery',
       'Bank Transfer',
@@ -92,32 +57,21 @@ const createOrder = async (
 
 
     if (
-      !allowedPaymentMethods
-          .includes(
+      !allowedPaymentMethods.includes(
         paymentMethod,
       )
     ) {
-      return res
-          .status(400)
-          .json({
+      return res.status(400).json({
         success: false,
-        message:
-            'Invalid payment method',
+        message: 'Invalid payment method',
       });
     }
 
 
-    // =========================================
-    // START DATABASE TRANSACTION
-    // =========================================
     session.startTransaction();
 
 
-    // =========================================
-    // GET BUYER CART
-    // =========================================
-    const cart =
-        await Cart.findOne({
+    const cart = await Cart.findOne({
       buyer: buyerId,
     }).session(session);
 
@@ -127,163 +81,114 @@ const createOrder = async (
       !cart.items ||
       cart.items.length === 0
     ) {
-      await session
-          .abortTransaction();
+      await session.abortTransaction();
 
-
-      return res
-          .status(400)
-          .json({
+      return res.status(400).json({
         success: false,
-        message:
-            'Your cart is empty',
+        message: 'Your cart is empty',
       });
     }
 
 
-    // =========================================
-    // CHECK STOCK AND REDUCE STOCK
-    // =========================================
-    for (
-      const item
-      of cart.items
-    ) {
+    // =====================================================
+    // CHECK + REDUCE STOCK
+    // =====================================================
+    for (const item of cart.items) {
       const stock =
-          await Stock
-              .findOneAndUpdate(
-        {
-          _id:
-              item.stockId,
+        await Stock.findOneAndUpdate(
+          {
+            _id: item.stockId,
 
-          currentAmount: {
-            $gte:
-                item.quantity,
+            currentAmount: {
+              $gte: item.quantity,
+            },
           },
-        },
-        {
-          $inc: {
-            currentAmount:
-                -item.quantity,
+
+          {
+            $inc: {
+              currentAmount: -item.quantity,
+            },
           },
-        },
-        {
-          new: true,
-          session,
-        },
-      );
 
-
-      if (!stock) {
-        const error =
-            new Error(
-          `Not enough stock available for ${item.name}`,
+          {
+            new: true,
+            session,
+          },
         );
 
 
-        error.statusCode =
-            400;
+      if (!stock) {
+        const error = new Error(
+          `Not enough stock available for ${item.name}`,
+        );
 
+        error.statusCode = 400;
 
         throw error;
       }
     }
 
 
-    // =========================================
-    // COPY CART ITEMS TO ORDER
-    // =========================================
     const orderItems =
-        cart.items.map(
-      (item) => ({
-        stockId:
-            item.stockId,
-
-        name:
-            item.name,
-
-        image:
-            item.image || '',
-
-        quantity:
-            item.quantity,
-
-        price:
-            item.price,
-      }),
-    );
+      cart.items.map((item) => ({
+        stockId: item.stockId,
+        name: item.name,
+        image: item.image || '',
+        quantity: item.quantity,
+        price: item.price,
+      }));
 
 
-    // =========================================
-    // CREATE ORDER
-    // =========================================
     const createdOrders =
-        await Order.create(
-      [
+      await Order.create(
+        [
+          {
+            buyerId,
+
+            items: orderItems,
+
+            shippingAddress:
+              shippingAddress.trim(),
+
+            paymentMethod,
+
+            status: 'Pending',
+          },
+        ],
         {
-          buyerId:
-              buyerId,
-
-          items:
-              orderItems,
-
-          shippingAddress:
-              shippingAddress
-                  .trim(),
-
-          paymentMethod:
-              paymentMethod,
-
-          status:
-              'Pending',
+          session,
         },
-      ],
-      {
-        session,
-      },
-    );
+      );
 
 
-    const order =
-        createdOrders[0];
+    const order = createdOrders[0];
 
 
-    // =========================================
-    // CLEAR CART
-    // =========================================
+    // Clear cart
     cart.items = [];
-
     cart.total = 0;
-
 
     await cart.save({
       session,
     });
 
 
-    // =========================================
-    // COMMIT TRANSACTION
-    // =========================================
-    await session
-        .commitTransaction();
+    await session.commitTransaction();
 
 
-    return res
-        .status(201)
-        .json({
+    return res.status(201).json({
       success: true,
 
       message:
-          'Order placed successfully',
+        'Order placed successfully',
 
-      order:
-          order,
+      order,
     });
+
   } catch (error) {
-    if (
-      session.inTransaction()
-    ) {
-      await session
-          .abortTransaction();
+
+    if (session.inTransaction()) {
+      await session.abortTransaction();
     }
 
 
@@ -294,200 +199,255 @@ const createOrder = async (
 
 
     return res
-        .status(
-      error.statusCode ||
-          500,
-    )
-        .json({
-      success: false,
+      .status(
+        error.statusCode || 500,
+      )
+      .json({
+        success: false,
 
-      message:
+        message:
           error.message ||
-              'Failed to create order',
-    });
+          'Failed to create order',
+      });
+
   } finally {
-    await session
-        .endSession();
+    await session.endSession();
   }
 };
 
 
 // =========================================================
-// GET LOGGED-IN BUYER'S ORDERS
+// ADMIN - GET ALL ORDERS
+// GET /api/orders
 // =========================================================
-const getMyOrders = async (
-  req,
-  res,
-) => {
+const getAllOrders = async (req, res) => {
   try {
-    const buyerId =
-        req.user.id;
 
-
-    if (!buyerId) {
-      return res
-          .status(401)
-          .json({
+    // Buyer should not access all customer orders
+    if (req.user.userType === 'Buyer') {
+      return res.status(403).json({
         success: false,
         message:
-            'Buyer authentication required',
+          'You are not authorized to view all orders',
       });
     }
 
 
     const orders =
-        await Order.find({
-      buyerId:
-          buyerId,
-    }).sort({
-      createdAt: -1,
-    });
+      await Order.find({})
+        .sort({
+          createdAt: -1,
+        });
 
 
-    return res
-        .status(200)
-        .json({
+    return res.status(200).json({
       success: true,
-      orders:
-          orders,
+
+      count:
+        orders.length,
+
+      orders,
     });
+
   } catch (error) {
+
+    console.error(
+      'Get all orders error:',
+      error,
+    );
+
+
+    return res.status(500).json({
+      success: false,
+
+      message:
+        'Failed to fetch orders',
+    });
+  }
+};
+
+
+// =========================================================
+// LOGGED-IN BUYER ORDERS
+// GET /api/orders/my
+// =========================================================
+const getMyOrders = async (req, res) => {
+  try {
+
+    const buyerId =
+      req.user.id;
+
+
+    const orders =
+      await Order.find({
+        buyerId,
+      })
+        .sort({
+          createdAt: -1,
+        });
+
+
+    return res.status(200).json({
+      success: true,
+
+      orders,
+    });
+
+  } catch (error) {
+
     console.error(
       'Get my orders error:',
       error,
     );
 
 
-    return res
-        .status(500)
-        .json({
+    return res.status(500).json({
       success: false,
+
       message:
-          'Failed to fetch orders',
+        'Failed to fetch orders',
     });
   }
 };
 
 
 // =========================================================
-// GET SINGLE ORDER BY ID
+// GET SINGLE ORDER
+// GET /api/orders/:orderId
 // =========================================================
-const getOrderById = async (
-  req,
-  res,
-) => {
+const getOrderById = async (req, res) => {
   try {
-    const buyerId =
-        req.user.id;
 
-    const orderId =
-        req.params.orderId;
+    const {
+      orderId,
+    } = req.params;
 
 
-    const order =
+    let order;
+
+
+    // Buyer can only see own order
+    if (req.user.userType === 'Buyer') {
+
+      order =
         await Order.findOne({
-      _id:
-          orderId,
+          _id: orderId,
 
-      buyerId:
-          buyerId,
-    });
+          buyerId:
+            req.user.id,
+        });
+
+    } else {
+
+      // Admin can view any order
+      order =
+        await Order.findById(
+          orderId,
+        );
+    }
 
 
     if (!order) {
-      return res
-          .status(404)
-          .json({
+      return res.status(404).json({
         success: false,
+
         message:
-            'Order not found',
+          'Order not found',
       });
     }
 
 
-    return res
-        .status(200)
-        .json({
+    return res.status(200).json({
       success: true,
 
-      order:
-          order,
+      order,
     });
+
   } catch (error) {
+
     console.error(
       'Get order details error:',
       error,
     );
 
 
-    return res
-        .status(500)
-        .json({
+    return res.status(500).json({
       success: false,
 
       message:
-          'Failed to fetch order details',
+        'Failed to fetch order details',
     });
   }
 };
 
 
 // =========================================================
-// GET ORDERS BY BUYER ID
+// GET ORDERS BY BUYER
+// GET /api/orders/buyer/:buyerId
 // =========================================================
 const getOrdersByBuyer = async (
   req,
   res,
 ) => {
   try {
+
     const buyerId =
-        req.params.buyerId;
+      req.params.buyerId;
 
 
     const orders =
-        await Order.find({
-      buyerId:
-          buyerId,
-    }).sort({
-      createdAt: -1,
-    });
+      await Order.find({
+        buyerId,
+      })
+        .sort({
+          createdAt: -1,
+        });
 
 
-    return res
-        .status(200)
-        .json({
+    return res.status(200).json({
       success: true,
 
-      orders:
-          orders,
+      orders,
     });
+
   } catch (error) {
+
     console.error(
-      'Get orders error:',
+      'Get orders by buyer error:',
       error,
     );
 
 
-    return res
-        .status(500)
-        .json({
+    return res.status(500).json({
       success: false,
 
       message:
-          'Failed to fetch orders',
+        'Failed to fetch orders',
     });
   }
 };
 
 
 // =========================================================
-// UPDATE ORDER STATUS
+// ADMIN - UPDATE ORDER STATUS
+// PUT /api/orders/:orderId/status
 // =========================================================
 const updateOrderStatus = async (
   req,
   res,
 ) => {
   try {
+
+    if (req.user.userType === 'Buyer') {
+      return res.status(403).json({
+        success: false,
+
+        message:
+          'You are not authorized to update orders',
+      });
+    }
+
+
     const {
       status,
     } = req.body;
@@ -500,36 +460,31 @@ const updateOrderStatus = async (
 
 
     if (
-      !allowedStatuses
-          .includes(
+      !allowedStatuses.includes(
         status,
       )
     ) {
-      return res
-          .status(400)
-          .json({
+      return res.status(400).json({
         success: false,
 
         message:
-            'Invalid order status',
+          'Invalid order status',
       });
     }
 
 
     const order =
-        await Order.findById(
-      req.params.orderId,
-    );
+      await Order.findById(
+        req.params.orderId,
+      );
 
 
     if (!order) {
-      return res
-          .status(404)
-          .json({
+      return res.status(404).json({
         success: false,
 
         message:
-            'Order not found',
+          'Order not found',
       });
     }
 
@@ -539,32 +494,146 @@ const updateOrderStatus = async (
     );
 
 
-    return res
-        .status(200)
-        .json({
+    return res.status(200).json({
       success: true,
 
       message:
-          'Order status updated successfully',
+        'Order status updated successfully',
 
-      order:
-          order,
+      order,
     });
+
   } catch (error) {
+
     console.error(
-      'Update order error:',
+      'Update order status error:',
       error,
     );
 
 
-    return res
-        .status(500)
-        .json({
+    return res.status(500).json({
       success: false,
 
       message:
-          'Failed to update order status',
+        'Failed to update order status',
     });
+  }
+};
+
+
+// =========================================================
+// ADMIN - DELETE ORDER
+// DELETE /api/orders/:orderId
+// =========================================================
+const deleteOrder = async (req, res) => {
+  const session =
+    await mongoose.startSession();
+
+  try {
+
+    if (req.user.userType === 'Buyer') {
+      return res.status(403).json({
+        success: false,
+
+        message:
+          'You are not authorized to delete orders',
+      });
+    }
+
+
+    session.startTransaction();
+
+
+    const order =
+      await Order.findById(
+        req.params.orderId,
+      ).session(session);
+
+
+    if (!order) {
+      await session.abortTransaction();
+
+      return res.status(404).json({
+        success: false,
+
+        message:
+          'Order not found',
+      });
+    }
+
+
+    // =====================================================
+    // IF PENDING ORDER IS DELETED,
+    // RETURN QUANTITY BACK TO STOCK
+    // =====================================================
+    if (order.status === 'Pending') {
+
+      for (const item of order.items) {
+
+        await Stock.findByIdAndUpdate(
+          item.stockId,
+
+          {
+            $inc: {
+              currentAmount:
+                item.quantity,
+            },
+          },
+
+          {
+            session,
+          },
+        );
+      }
+    }
+
+
+    await Order.deleteOne(
+      {
+        _id: order._id,
+      },
+      {
+        session,
+      },
+    );
+
+
+    await session.commitTransaction();
+
+
+    return res.status(200).json({
+      success: true,
+
+      message:
+        'Order deleted successfully',
+
+      deletedOrderId:
+        order._id,
+    });
+
+  } catch (error) {
+
+    if (session.inTransaction()) {
+      await session.abortTransaction();
+    }
+
+
+    console.error(
+      'Delete order error:',
+      error,
+    );
+
+
+    return res.status(500).json({
+      success: false,
+
+      message:
+        'Failed to delete order',
+    });
+
+  } finally {
+
+    await session.endSession();
   }
 };
 
@@ -575,6 +644,8 @@ const updateOrderStatus = async (
 module.exports = {
   createOrder,
 
+  getAllOrders,
+
   getMyOrders,
 
   getOrderById,
@@ -582,4 +653,6 @@ module.exports = {
   getOrdersByBuyer,
 
   updateOrderStatus,
+
+  deleteOrder,
 };

@@ -1,30 +1,26 @@
-const express =
-    require('express');
+const express = require('express');
 
-const router =
-    express.Router();
-
+const router = express.Router();
 
 const authenticate =
-    require(
-  '../middleware/authenticate',
-);
+  require('../middleware/authenticate');
 
 
 const {
   createOrder,
+  getAllOrders,
   getMyOrders,
   getOrderById,
   getOrdersByBuyer,
   updateOrderStatus,
+  deleteOrder,
 } = require(
   '../controllers/orderController',
 );
 
 
 // =========================================================
-// CREATE ORDER
-//
+// BUYER - CREATE ORDER
 // POST /api/orders
 // =========================================================
 router.post(
@@ -35,8 +31,18 @@ router.post(
 
 
 // =========================================================
-// LOGGED-IN BUYER ORDERS
-//
+// ADMIN - GET ALL ORDERS
+// GET /api/orders
+// =========================================================
+router.get(
+  '/',
+  authenticate,
+  getAllOrders,
+);
+
+
+// =========================================================
+// BUYER - GET MY ORDERS
 // GET /api/orders/my
 // =========================================================
 router.get(
@@ -48,7 +54,6 @@ router.get(
 
 // =========================================================
 // GET ORDERS BY BUYER
-//
 // GET /api/orders/buyer/:buyerId
 // =========================================================
 router.get(
@@ -59,8 +64,7 @@ router.get(
 
 
 // =========================================================
-// UPDATE ORDER STATUS
-//
+// ADMIN - UPDATE STATUS
 // PUT /api/orders/:orderId/status
 // =========================================================
 router.put(
@@ -71,14 +75,22 @@ router.put(
 
 
 // =========================================================
-// GET SINGLE ORDER
-//
-// GET /api/orders/:orderId
+// ADMIN - DELETE ORDER
+// DELETE /api/orders/:orderId
 // =========================================================
+router.delete(
+  '/:orderId',
+  authenticate,
+  deleteOrder,
+);
+
+
+// =========================================================
+// GET SINGLE ORDER
+// GET /api/orders/:orderId
 //
-// IMPORTANT:
-// Keep this after /my and /buyer routes.
-//
+// KEEP THIS LAST
+// =========================================================
 router.get(
   '/:orderId',
   authenticate,
@@ -87,4 +99,4 @@ router.get(
 
 
 module.exports =
-    router;
+  router;
