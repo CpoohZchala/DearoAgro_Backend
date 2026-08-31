@@ -1,37 +1,90 @@
-const express = require('express');
-const router = express.Router();
+const express =
+    require('express');
 
-const authenticate = require('../middleware/authenticate');
+const router =
+    express.Router();
+
+
+const authenticate =
+    require(
+  '../middleware/authenticate',
+);
+
 
 const {
   createOrder,
+  getMyOrders,
+  getOrderById,
   getOrdersByBuyer,
   updateOrderStatus,
-} = require('../controllers/orderController');
+} = require(
+  '../controllers/orderController',
+);
 
 
-// Create order
+// =========================================================
+// CREATE ORDER
+//
+// POST /api/orders
+// =========================================================
 router.post(
   '/',
   authenticate,
-  createOrder
+  createOrder,
 );
 
 
-// Get buyer orders
+// =========================================================
+// LOGGED-IN BUYER ORDERS
+//
+// GET /api/orders/my
+// =========================================================
+router.get(
+  '/my',
+  authenticate,
+  getMyOrders,
+);
+
+
+// =========================================================
+// GET ORDERS BY BUYER
+//
+// GET /api/orders/buyer/:buyerId
+// =========================================================
 router.get(
   '/buyer/:buyerId',
   authenticate,
-  getOrdersByBuyer
+  getOrdersByBuyer,
 );
 
 
-// Update order status
+// =========================================================
+// UPDATE ORDER STATUS
+//
+// PUT /api/orders/:orderId/status
+// =========================================================
 router.put(
   '/:orderId/status',
   authenticate,
-  updateOrderStatus
+  updateOrderStatus,
 );
 
 
-module.exports = router;
+// =========================================================
+// GET SINGLE ORDER
+//
+// GET /api/orders/:orderId
+// =========================================================
+//
+// IMPORTANT:
+// Keep this after /my and /buyer routes.
+//
+router.get(
+  '/:orderId',
+  authenticate,
+  getOrderById,
+);
+
+
+module.exports =
+    router;

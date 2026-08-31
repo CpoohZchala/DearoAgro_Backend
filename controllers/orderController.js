@@ -1,19 +1,31 @@
-const mongoose = require('mongoose');
+const mongoose =
+    require('mongoose');
 
-const Order = require('../models/Order');
-const Cart = require('../models/Cart');
-const Stock = require('../models/Stock');
+const Order =
+    require('../models/Order');
+
+const Cart =
+    require('../models/Cart');
+
+const Stock =
+    require('../models/Stock');
 
 
 // =========================================================
 // CREATE ORDER
 // =========================================================
-const createOrder = async (req, res) => {
-  const session = await mongoose.startSession();
+const createOrder = async (
+  req,
+  res,
+) => {
+  const session =
+      await mongoose.startSession();
 
   try {
-    // Comes from your JWT
-    const buyerId = req.user.id;
+    // Buyer ID comes from JWT
+    const buyerId =
+        req.user.id;
+
 
     const {
       shippingAddress,
@@ -21,63 +33,91 @@ const createOrder = async (req, res) => {
     } = req.body;
 
 
-    // Buyer ID check
+    // =========================================
+    // BUYER CHECK
+    // =========================================
     if (!buyerId) {
-      return res.status(401).json({
+      return res
+          .status(401)
+          .json({
         success: false,
-        message: 'Buyer authentication required',
+        message:
+            'Buyer authentication required',
       });
     }
 
 
-    // Only Buyer accounts can checkout
+    // =========================================
+    // ONLY BUYERS CAN PLACE ORDERS
+    // =========================================
     if (
       req.user.userType &&
-      req.user.userType !== 'Buyer'
+      req.user.userType !==
+          'Buyer'
     ) {
-      return res.status(403).json({
+      return res
+          .status(403)
+          .json({
         success: false,
-        message: 'Only buyers can place orders',
+        message:
+            'Only buyers can place orders',
       });
     }
 
 
-    // Address validation
+    // =========================================
+    // ADDRESS VALIDATION
+    // =========================================
     if (
       !shippingAddress ||
       !shippingAddress.trim()
     ) {
-      return res.status(400).json({
+      return res
+          .status(400)
+          .json({
         success: false,
-        message: 'Shipping address is required',
+        message:
+            'Shipping address is required',
       });
     }
 
 
-    // Payment validation
+    // =========================================
+    // PAYMENT METHOD VALIDATION
+    // =========================================
     const allowedPaymentMethods = [
       'Cash on Delivery',
       'Bank Transfer',
     ];
 
+
     if (
-      !allowedPaymentMethods.includes(
+      !allowedPaymentMethods
+          .includes(
         paymentMethod,
       )
     ) {
-      return res.status(400).json({
+      return res
+          .status(400)
+          .json({
         success: false,
-        message: 'Invalid payment method',
+        message:
+            'Invalid payment method',
       });
     }
 
 
-    // Start transaction
+    // =========================================
+    // START DATABASE TRANSACTION
+    // =========================================
     session.startTransaction();
 
 
-    // Get logged-in buyer cart
-    const cart = await Cart.findOne({
+    // =========================================
+    // GET BUYER CART
+    // =========================================
+    const cart =
+        await Cart.findOne({
       buyer: buyerId,
     }).session(session);
 
@@ -87,23 +127,37 @@ const createOrder = async (req, res) => {
       !cart.items ||
       cart.items.length === 0
     ) {
-      await session.abortTransaction();
+      await session
+          .abortTransaction();
 
-      return res.status(400).json({
+
+      return res
+          .status(400)
+          .json({
         success: false,
-        message: 'Your cart is empty',
+        message:
+            'Your cart is empty',
       });
     }
 
 
-    // Check and reduce stock
-    for (const item of cart.items) {
+    // =========================================
+    // CHECK STOCK AND REDUCE STOCK
+    // =========================================
+    for (
+      const item
+      of cart.items
+    ) {
       const stock =
-          await Stock.findOneAndUpdate(
+          await Stock
+              .findOneAndUpdate(
         {
-          _id: item.stockId,
+          _id:
+              item.stockId,
+
           currentAmount: {
-            $gte: item.quantity,
+            $gte:
+                item.quantity,
           },
         },
         {
@@ -120,44 +174,67 @@ const createOrder = async (req, res) => {
 
 
       if (!stock) {
-        const error = new Error(
+        const error =
+            new Error(
           `Not enough stock available for ${item.name}`,
         );
 
-        error.statusCode = 400;
+
+        error.statusCode =
+            400;
+
 
         throw error;
       }
     }
 
 
-    // Copy cart items to order
+    // =========================================
+    // COPY CART ITEMS TO ORDER
+    // =========================================
     const orderItems =
-        cart.items.map((item) => ({
-      stockId: item.stockId,
-      name: item.name,
-      image: item.image || '',
-      quantity: item.quantity,
-      price: item.price,
-    }));
+        cart.items.map(
+      (item) => ({
+        stockId:
+            item.stockId,
+
+        name:
+            item.name,
+
+        image:
+            item.image || '',
+
+        quantity:
+            item.quantity,
+
+        price:
+            item.price,
+      }),
+    );
 
 
-    // Create order
+    // =========================================
+    // CREATE ORDER
+    // =========================================
     const createdOrders =
         await Order.create(
       [
         {
-          buyerId: buyerId,
+          buyerId:
+              buyerId,
 
-          items: orderItems,
+          items:
+              orderItems,
 
           shippingAddress:
-              shippingAddress.trim(),
+              shippingAddress
+                  .trim(),
 
           paymentMethod:
               paymentMethod,
 
-          status: 'Pending',
+          status:
+              'Pending',
         },
       ],
       {
@@ -170,51 +247,193 @@ const createOrder = async (req, res) => {
         createdOrders[0];
 
 
-    // Clear cart
+    // =========================================
+    // CLEAR CART
+    // =========================================
     cart.items = [];
+
     cart.total = 0;
+
 
     await cart.save({
       session,
     });
 
 
-    // Commit
-    await session.commitTransaction();
+    // =========================================
+    // COMMIT TRANSACTION
+    // =========================================
+    await session
+        .commitTransaction();
 
 
-    return res.status(201).json({
+    return res
+        .status(201)
+        .json({
       success: true,
+
       message:
           'Order placed successfully',
-      order: order,
+
+      order:
+          order,
     });
   } catch (error) {
-    if (session.inTransaction()) {
-      await session.abortTransaction();
+    if (
+      session.inTransaction()
+    ) {
+      await session
+          .abortTransaction();
     }
+
 
     console.error(
       'Create order error:',
       error,
     );
 
-    return res.status(
-      error.statusCode || 500,
-    ).json({
+
+    return res
+        .status(
+      error.statusCode ||
+          500,
+    )
+        .json({
       success: false,
+
       message:
           error.message ||
-          'Failed to create order',
+              'Failed to create order',
     });
   } finally {
-    await session.endSession();
+    await session
+        .endSession();
   }
 };
 
 
 // =========================================================
-// GET BUYER ORDERS
+// GET LOGGED-IN BUYER'S ORDERS
+// =========================================================
+const getMyOrders = async (
+  req,
+  res,
+) => {
+  try {
+    const buyerId =
+        req.user.id;
+
+
+    if (!buyerId) {
+      return res
+          .status(401)
+          .json({
+        success: false,
+        message:
+            'Buyer authentication required',
+      });
+    }
+
+
+    const orders =
+        await Order.find({
+      buyerId:
+          buyerId,
+    }).sort({
+      createdAt: -1,
+    });
+
+
+    return res
+        .status(200)
+        .json({
+      success: true,
+      orders:
+          orders,
+    });
+  } catch (error) {
+    console.error(
+      'Get my orders error:',
+      error,
+    );
+
+
+    return res
+        .status(500)
+        .json({
+      success: false,
+      message:
+          'Failed to fetch orders',
+    });
+  }
+};
+
+
+// =========================================================
+// GET SINGLE ORDER BY ID
+// =========================================================
+const getOrderById = async (
+  req,
+  res,
+) => {
+  try {
+    const buyerId =
+        req.user.id;
+
+    const orderId =
+        req.params.orderId;
+
+
+    const order =
+        await Order.findOne({
+      _id:
+          orderId,
+
+      buyerId:
+          buyerId,
+    });
+
+
+    if (!order) {
+      return res
+          .status(404)
+          .json({
+        success: false,
+        message:
+            'Order not found',
+      });
+    }
+
+
+    return res
+        .status(200)
+        .json({
+      success: true,
+
+      order:
+          order,
+    });
+  } catch (error) {
+    console.error(
+      'Get order details error:',
+      error,
+    );
+
+
+    return res
+        .status(500)
+        .json({
+      success: false,
+
+      message:
+          'Failed to fetch order details',
+    });
+  }
+};
+
+
+// =========================================================
+// GET ORDERS BY BUYER ID
 // =========================================================
 const getOrdersByBuyer = async (
   req,
@@ -224,16 +443,23 @@ const getOrdersByBuyer = async (
     const buyerId =
         req.params.buyerId;
 
+
     const orders =
         await Order.find({
-      buyerId: buyerId,
+      buyerId:
+          buyerId,
     }).sort({
       createdAt: -1,
     });
 
-    return res.status(200).json({
+
+    return res
+        .status(200)
+        .json({
       success: true,
-      orders: orders,
+
+      orders:
+          orders,
     });
   } catch (error) {
     console.error(
@@ -241,8 +467,12 @@ const getOrdersByBuyer = async (
       error,
     );
 
-    return res.status(500).json({
+
+    return res
+        .status(500)
+        .json({
       success: false,
+
       message:
           'Failed to fetch orders',
     });
@@ -258,7 +488,10 @@ const updateOrderStatus = async (
   res,
 ) => {
   try {
-    const { status } = req.body;
+    const {
+      status,
+    } = req.body;
+
 
     const allowedStatuses = [
       'Pending',
@@ -267,12 +500,16 @@ const updateOrderStatus = async (
 
 
     if (
-      !allowedStatuses.includes(
+      !allowedStatuses
+          .includes(
         status,
       )
     ) {
-      return res.status(400).json({
+      return res
+          .status(400)
+          .json({
         success: false,
+
         message:
             'Invalid order status',
       });
@@ -286,9 +523,13 @@ const updateOrderStatus = async (
 
 
     if (!order) {
-      return res.status(404).json({
+      return res
+          .status(404)
+          .json({
         success: false,
-        message: 'Order not found',
+
+        message:
+            'Order not found',
       });
     }
 
@@ -298,11 +539,16 @@ const updateOrderStatus = async (
     );
 
 
-    return res.status(200).json({
+    return res
+        .status(200)
+        .json({
       success: true,
+
       message:
           'Order status updated successfully',
-      order: order,
+
+      order:
+          order,
     });
   } catch (error) {
     console.error(
@@ -310,8 +556,12 @@ const updateOrderStatus = async (
       error,
     );
 
-    return res.status(500).json({
+
+    return res
+        .status(500)
+        .json({
       success: false,
+
       message:
           'Failed to update order status',
     });
@@ -319,8 +569,17 @@ const updateOrderStatus = async (
 };
 
 
+// =========================================================
+// EXPORT
+// =========================================================
 module.exports = {
   createOrder,
+
+  getMyOrders,
+
+  getOrderById,
+
   getOrdersByBuyer,
+
   updateOrderStatus,
 };
