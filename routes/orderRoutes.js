@@ -1,18 +1,37 @@
 const express = require('express');
 const router = express.Router();
+
+const authenticate = require('../middleware/authenticate');
+
 const {
   createOrder,
   getOrdersByBuyer,
-  updateOrderStatus
+  updateOrderStatus,
 } = require('../controllers/orderController');
 
-// Create a new order
-router.post('/', createOrder);
 
-// Get orders by buyer
-router.get('/buyer/:buyerId', getOrdersByBuyer);
+// Create order
+router.post(
+  '/',
+  authenticate,
+  createOrder
+);
+
+
+// Get buyer orders
+router.get(
+  '/buyer/:buyerId',
+  authenticate,
+  getOrdersByBuyer
+);
+
 
 // Update order status
-router.put('/:orderId/status', updateOrderStatus);
+router.put(
+  '/:orderId/status',
+  authenticate,
+  updateOrderStatus
+);
+
 
 module.exports = router;
