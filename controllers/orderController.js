@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const Order = require('../models/orderModel');
+const Order = require('../models/Order');
 const Cart = require('../models/cartModel');
 const Stock = require('../models/stockModel');
 
